@@ -1,0 +1,27 @@
+// Kiểm tra mục Tra cứu nhanh: node scripts/check-faq.mjs <tiền-tố> [rộng] [cao]
+import { chromium } from 'playwright'
+const [out, w = 1440, h = 900] = [process.argv[2], Number(process.argv[3]), Number(process.argv[4])]
+const b = await chromium.launch()
+const p = await b.newPage({ viewport: { width: w || 1440, height: h || 900 } })
+const errs = []
+p.on('console', (m) => m.type() === 'error' && errs.push(m.text()))
+p.on('pageerror', (e) => errs.push(String(e)))
+await p.goto('http://localhost:4173/', { waitUntil: 'networkidle' })
+await p.waitForTimeout(1500)
+await p.evaluate(() => { const e = document.getElementById('tra-cuu'); window.scrollTo(0, e.getBoundingClientRect().top + scrollY + 60) })
+await p.waitForTimeout(900)
+await p.screenshot({ path: `${out}-faq-1.png` })
+await p.locator('#tra-cuu [role=tab]').nth(0).focus()
+await p.keyboard.press('ArrowDown')
+await p.keyboard.press('ArrowDown')
+await p.locator('#tra-cuu .fq-q').nth(1).click()
+await p.waitForTimeout(600)
+console.log('selected:', await p.locator('#tra-cuu [role=tab][aria-selected=true]').innerText())
+await p.screenshot({ path: `${out}-faq-2.png` })
+await p.locator('#tra-cuu [role=tab]').nth(0).click()
+await p.waitForTimeout(500)
+await p.locator('#tra-cuu .fq-q').nth(3).click()
+await p.waitForTimeout(600)
+await p.screenshot({ path: `${out}-faq-3.png` })
+console.log('errors:', errs)
+await b.close()
