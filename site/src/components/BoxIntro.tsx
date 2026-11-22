@@ -109,6 +109,11 @@ export default function BoxIntro() {
   const [guide, setGuide] = useState(false)
   const [tokensOpen, setTokensOpen] = useState<TokenKind | null>(null)
   const [mapView, setMapView] = useState(false) // đang xem chi tiết bản đồ
+  const [closing, setClosing] = useState(false) // đang chạy trình tự đóng hộp
+  const closingRef = useRef(false)
+  const flipBack = useRef(false) // lần Flip sắp tới là đặt bản đồ trở lại khay
+  const finishClose = useRef<() => void>(() => {})
+  finishClose.current = () => { closingRef.current = false; setClosing(false); setOpen(false) }
   const [mapAside, setMapAside] = useState(false) // bản đồ đã được nhấc khỏi khay, đặt cạnh hộp
   const flipState = useRef<Flip.FlipState | null>(null)
   const deckBack = useRef<(() => void) | null>(null) // DeckFocus gắn hàm lùi có hiệu ứng vào đây (Esc dùng)
@@ -179,7 +184,12 @@ export default function BoxIntro() {
       const t = tl.current
       if (!t) return
       if (reduced) { t.progress(0); bob.current?.play() }
-      else t.timeScale(1.6).eventCallback('onReverseComplete', () => bob.current?.play()).reverse()
+      else {
+        // Bản đồ đã nằm lại trên khay: không cho nó nhấc lên riêng, nó mờ đi cùng khay rồi nắp mới đóng xuống
+        t.getChildren(false, true, false).filter((x) => x.vars.id === 'sheet').forEach((x) => x.kill())
+        t.progress(1)
+        t.timeScale(1.1).eventCallback('onReverseComplete', () => bob.current?.play()).reverse()
+      }
       return
     }
     tl.current?.kill()
@@ -205,7 +215,7 @@ export default function BoxIntro() {
       // Nắp 3D bay đi, nắp 2D đáp xuống cạnh hộp
       .fromTo(el.current.lid2!, { autoAlpha: 0, x: -60, y: -90, rotation: -14, scale: 1.25 }, { autoAlpha: 1, x: 0, y: 0, rotation: 0, scale: 1, duration: 0.8, ease: 'power3.out' }, 1.1)
       // Tấm bản đồ thả xuống phủ lên khay
-      .fromTo(el.current.sheet!, { autoAlpha: 0, y: -50, scale: 1.12, rotation: -3 }, { autoAlpha: 1, y: 0, scale: 1, rotation: 0, duration: 0.7, ease: 'power3.out' }, 1.55)
+      .fromTo(el.current.sheet!, { autoAlpha: 0, y: -50, scale: 1.12, rotation: -3 }, { autoAlpha: 1, y: 0, scale: 1, rotation: 0, duration: 0.7, ease: 'power3.out', id: 'sheet' }, 1.55)
     tl.current = t
     if (reduced) t.progress(1)
     else t.play()
@@ -216,14 +226,27 @@ export default function BoxIntro() {
     setEver(true)
     setOpen(true)
   }
+  /**
+   * Đóng hộp theo trình tự: (1) đặt lại tấm bản đồ lên khay (bay từ cạnh hộp về, Flip ngược), (2) khay và bản đồ mờ đi,
+   * nắp bay về, nắp 3D hạ xuống đóng hộp, hộp xoay về dáng đóng (đảo ngược timeline mở).
+   */
   const closeBox = () => {
+    if (closingRef.current) return
+    closingRef.current = true
+    setClosing(true)
     setCard(null)
     setStack(null)
     setGuide(false)
     setTokensOpen(null)
     setMapView(false)
-    setMapAside(false)
-    setOpen(false)
+    if (mapAside && !reducedRef.current) {
+      flipState.current = Flip.getState('[data-flip-id]', { props: 'opacity' })
+      flipBack.current = true
+      setMapAside(false) // bản đồ dựng lại trên khay; Flip (effect bên dưới) kéo nó từ chỗ cũ về, xong mới đóng nắp
+    } else {
+      setMapAside(false)
+      finishClose.current()
+    }
   }
 
   // Kéo để xoay; bấm (di chuyển < 6px) để mở
@@ -308,6 +331,11 @@ export default function BoxIntro() {
   useLayoutEffect(() => {
     const state = flipState.current
     flipState.current = null
+    if (!mapAside && state && flipBack.current) {
+      flipBack.current = false
+      Flip.from(state, { targets: '[data-flip-id]', duration: 0.9, ease: 'power3.inOut', scale: true, absolute: true, onComplete: () => finishClose.current() })
+      return
+    }
     if (!mapAside || !state || reducedRef.current) return
     Flip.from(state, { targets: '[data-flip-id]', duration: 0.9, ease: 'power3.inOut', scale: true, absolute: true })
     // Khay lộ ra: các món nảy lên lần lượt, ánh vàng tắt dần
@@ -344,21 +372,6 @@ export default function BoxIntro() {
     return () => window.removeEventListener('keydown', esc)
   })
 
-  // Các lá xòe ra từ vị trí chồng (Mật chiếu; hộp bài xanh/đỏ có hiệu ứng riêng trong DeckFocus)
-  useLayoutEffect(() => {
-    if (!stack || isDeck(stack) || reducedRef.current) return
-    const from = root.current?.querySelector<HTMLElement>(`[data-stack="${stack.id}"]`)?.getBoundingClientRect()
-    if (!from) return
-    const cards = gsap.utils.toArray<HTMLElement>('.bx-card', root.current)
-    const sx = from.left + from.width / 2, sy = from.top + from.height / 2
-    gsap.from('.bx-detail', { autoAlpha: 0, duration: 0.3 })
-    gsap.from(cards, {
-      x: (_i, t: HTMLElement) => { const r = t.getBoundingClientRect(); return sx - (r.left + r.width / 2) },
-      y: (_i, t: HTMLElement) => { const r = t.getBoundingClientRect(); return sy - (r.top + r.height / 2) },
-      scale: 0.4, rotation: () => gsap.utils.random(-16, 16), autoAlpha: 0,
-      duration: 0.7, ease: 'power3.out', stagger: 0.035, clearProps: 'transform,opacity,visibility',
-    })
-  }, [stack])
   useLayoutEffect(() => {
     if (!guide || reducedRef.current) return
     gsap.from('.bx-detail', { autoAlpha: 0, y: 24, duration: 0.45, ease: 'power3.out', clearProps: 'all' })
@@ -432,7 +445,7 @@ export default function BoxIntro() {
           <div className="bx-table absolute inset-0 grid place-items-center" inert={!open || detail}>
             <div ref={ref('map')} className="bx-desk invisible">
               <div className="bx-plane">
-                <BoxTray inert={!mapAside} focused={stack && isDeck(stack) ? stack.id : undefined} onPick={pickStack} />
+                <BoxTray inert={!mapAside} focused={stack ? stack.id : undefined} onPick={pickStack} />
                 {!mapAside && <MapSheet sheetRef={ref('sheet')} onClick={openMap} />}
               </div>
               <div className="bx-side">
@@ -446,16 +459,14 @@ export default function BoxIntro() {
       </div>
 
       <div className={`relative z-10 mt-6 flex gap-4 transition-opacity duration-500 ${open ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
-        <button type="button" onClick={closeBox} className="bx-close" tabIndex={open ? 0 : -1}>
+        <button type="button" onClick={closeBox} className="bx-close" tabIndex={open ? 0 : -1} disabled={closing}>
           <svg viewBox="0 0 24 24" aria-hidden><path d="M3 9l9-5 9 5M4 10v9h16v-9M9 14h6" /></svg>
           {boxText.close}
         </button>
       </div>
 
       {/* Xem các lá trong một chồng */}
-      {stack && (isDeck(stack)
-        ? <DeckFocus group={stack} inert={!!card} backRef={deckBack} onBack={backFromDetail} onPick={(c) => setCard(c)} />
-        : <Fan group={stack} inert={!!card} onBack={backFromDetail} onPick={(c) => setCard(c)} />)}
+      {stack && <DeckFocus group={stack} inert={!!card} backRef={deckBack} onBack={backFromDetail} onPick={(c) => setCard(c)} />}
       {guide && <GuideViewer onBack={backFromDetail} />}
       {tokensOpen && <TokenViewer kind={tokensOpen} onBack={backFromDetail} />}
       {mapView && <MapViewer onBack={backFromDetail} />}
@@ -470,17 +481,14 @@ function MapSheet({ sheetRef, onClick, aside = false }: { sheetRef: (n: HTMLElem
     <button ref={sheetRef} type="button" data-stack="map" data-flip-id="map" onClick={onClick} aria-label={boxText.mapOpen}
       className={`bx-mapsheet ${aside ? 'bx-mapsheet-aside' : ''}`}>
       <img src={mapImage} alt="" width={1600} height={1602} draggable={false} />
-      <span className="bx-label">{boxText.mapLabel}</span>
     </button>
   )
 }
 
 /** Hai hộp bài phe xanh/đỏ (tuck box) — Mật chiếu là xấp bài rời, vẫn xòe thành lưới */
-const isDeck = (g: CardGroup) => g.side !== 'secret'
 
 /**
- * Hộp bài được đưa ra giữa: bay từ ô trong khay ra giữa màn hình (nền tối), tự mở nắp (lưỡi gài rút, nắp lật, tai bung,
- * ánh vàng, cọc thẻ trượt lên), rồi các lá bay ra khỏi miệng hộp xòe thành quạt phía trên hộp. Bấm lá: phóng to (Zoom).
+ * Hộp bài được đưa ra giữa: bay từ ô trong khay ra giữa màn hình (nền tối), các lá bay ra từ tâm hộp xòe thành quạt rồi hộp mờ đi. Bấm lá: phóng to (Zoom).
  * Quay lại / Esc: chạy ngược toàn bộ (lá thu về, nắp đóng, hộp bay về đúng ô trong khay) rồi mới lùi.
  */
 function DeckFocus({ group, inert, backRef, onBack, onPick }: {
@@ -513,21 +521,17 @@ function DeckFocus({ group, inert, backRef, onBack, onPick }: {
         return { x: r * Math.sin(t), y: -r * Math.cos(t), r: (t * 180) / Math.PI, z }
       })
     }
-    // Khung hẹp (mobile): lá chồng quá sát thì chia 2 vòng, vòng trong nằm trước
-    const gap = n > 1 ? (R * 2 * angle(R, n)) / (n - 1) : cw
+    // Hai hàng theo nhóm (group.topCount): hàng trên = vòng ngoài, hàng dưới = vòng trong nằm trước. Hết chỗ thì dồn một vòng.
     const r2 = R - ch * 0.55
-    if (n > 8 && gap < cw * 0.4 && r2 > dk.offsetHeight / 2 + ch * 0.25) {
-      const outer = Math.ceil(n / 2)
-      return [...arc(outer, R, 1), ...arc(n - outer, r2, 2)]
+    if (group.topCount > 0 && group.topCount < n && r2 > dk.offsetHeight / 2 + ch * 0.25) {
+      return [...arc(group.topCount, R, 1), ...arc(n - group.topCount, r2, 2)]
     }
     return arc(n, R, 1)
   }
 
   useLayoutEffect(() => {
-    const q = gsap.utils.selector(deck.current)
     const cards = gsap.utils.toArray<HTMLElement>('.bx-fan-card', area.current)
     const pos = fanLayout()
-    const mouth = -deck.current!.offsetHeight * 0.3
     const from = document.querySelector<HTMLElement>(`.bx-tray [data-stack="${group.id}"] .bx-deck`)?.getBoundingClientRect()
     const d = deck.current!.getBoundingClientRect()
     const t = gsap.timeline({ paused: true, defaults: { ease: 'power3.inOut' } })
@@ -539,20 +543,12 @@ function DeckFocus({ group, inert, backRef, onBack, onPick }: {
         scale: from.width / d.width, duration: 0.75,
       }, 0)
     }
-    t.to(deck.current, { y: -14, duration: 0.25, ease: 'power2.out' }, 0.75)
-      .to(q('.bx-tuck'), { yPercent: -14, duration: 0.2, ease: 'power1.out' }, 0.85) // rút lưỡi gài khỏi mặt hộp
-      .to(q('.bx-tuck'), { yPercent: 0, rotationX: -180, transformPerspective: 700, duration: 0.6, ease: 'power2.inOut' }, 1.05)
-      .set(q('.bx-tuck'), { zIndex: 0 }, 1.35)
-      .fromTo(q('.bx-ear'), { scaleY: 0, rotation: 0, autoAlpha: 0 },
-        { scaleY: 1, rotation: (i: number) => (i ? 28 : -28), autoAlpha: 1, duration: 0.4, ease: 'back.out(2.5)' }, 1.5)
-      .fromTo(q('.bx-deck-light'), { autoAlpha: 0, scale: 0.3 }, { autoAlpha: 1, scale: 1.15, duration: 0.5, ease: 'power2.out' }, 1.45)
-      .to(q('.bx-deck-light'), { autoAlpha: 0.7, scale: 1, duration: 0.6 }, 2.1)
-      .fromTo(q('.bx-deck-stack'), { yPercent: 0 }, { yPercent: -30, duration: 0.6, ease: 'power3.out' }, 1.6)
-      .to(deck.current, { y: 0, duration: 0.3, ease: 'power2.inOut' }, 1.6)
-      .fromTo(cards, { x: 0, y: mouth, rotation: 0, scale: 0.55, autoAlpha: 0 }, {
+    // Không mở nắp: các lá bay ra từ tâm hộp xòe thành quạt, rồi hộp mờ đi để không che lá
+    t.fromTo(cards, { x: 0, y: 0, rotation: 0, scale: 0.55, autoAlpha: 0 }, {
         x: (i: number) => pos[i].x, y: (i: number) => pos[i].y, rotation: (i: number) => pos[i].r, zIndex: (i: number) => pos[i].z,
         scale: 1, autoAlpha: 1, duration: 0.75, ease: 'back.out(1.1)', stagger: 0.05,
-      }, 1.95)
+      }, 0.8)
+      .to(deck.current, { autoAlpha: 0, scale: 0.9, duration: 0.45, ease: 'power2.in' }, 0.95)
     tl.current = t
     if (prefersReducedMotionNow()) t.progress(1)
     else t.play()
@@ -605,29 +601,6 @@ function gridSize(n: number) {
   return { cs, rs: Math.ceil(n / cs), cd: Math.ceil(n / rd), rd }
 }
 
-function Fan({ group, inert, onBack, onPick }: { group: CardGroup; inert: boolean; onBack: () => void; onPick: (c: Card) => void }) {
-  const g = gridSize(group.cards.length)
-  return (
-    <div role="dialog" aria-label={group.name} inert={inert} className="bx-detail absolute inset-0 z-30 flex flex-col bg-night/90 px-4 pb-6 pt-24 text-left backdrop-blur-sm md:px-8">
-      <div className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-2">
-        <BackButton onClick={onBack} />
-        <h3 className="font-display text-2xl font-bold text-gold md:text-3xl">{group.name}</h3>
-        <span className="text-sm text-mist">{boxText.pickCard}</span>
-      </div>
-      {/* Lưới a×b co theo khung (container query) để thấy hết các lá cùng lúc, không phải cuộn */}
-      <div className="bx-grid-box min-h-0 flex-1">
-        <div className="bx-grid" style={{ '--cs': g.cs, '--rs': g.rs, '--cd': g.cd, '--rd': g.rd } as CSSProperties}>
-          {group.cards.map((c) => (
-            <button key={c.id} type="button" data-card={c.id} onClick={() => onPick(c)} aria-label={c.name} className="bx-card cursor-pointer">
-              <img src={c.image} alt="" width={600} height={927} draggable={false} className="h-full w-full rounded-md object-cover" />
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
-
 /** Các loại token: ảnh + số lượng + ghi chú (nguyên văn nội dung team). Loại chưa có ảnh hiện vòng tròn kèm số. */
 function TokenViewer({ kind, onBack }: { kind: TokenKind; onBack: () => void }) {
   const set = TOKEN_SETS[kind]
@@ -677,7 +650,9 @@ function Zoom({ card, group, onBack }: { card: Card; group: CardGroup; onBack: (
  * Khung xem phóng to dùng chung (tờ hướng dẫn, bản đồ).
  * Phóng to: cuộn chuột (quanh vị trí con trỏ), bấm đúp, chụm hai ngón; kéo để di chuyển khi đã phóng to.
  */
-function ZoomPane({ max, label, sheetClass, children }: { max: number; label: string; sheetClass: string; children: ReactNode }) {
+/** onTap(nx): bấm nhẹ (không kéo, không phóng to, không phải bấm đúp) trên tờ; nx = vị trí ngang 0..1 trên tờ */
+function ZoomPane({ max, label, sheetClass, onTap, children }: { max: number; label: string; sheetClass: string; onTap?: (nx: number) => void; children: ReactNode }) {
+  const tap = useRef<{ x: number; y: number; ok: boolean; t: number }>({ x: 0, y: 0, ok: false, t: 0 })
   const view = useRef<HTMLDivElement>(null) // khung nhìn, không biến đổi
   const sheet = useRef<HTMLDivElement>(null) // tờ giấy, GSAP scale + x/y (gốc 0 0)
   const z = useRef({ s: 1, x: 0, y: 0 })
@@ -726,6 +701,8 @@ function ZoomPane({ max, label, sheetClass, children }: { max: number; label: st
   const onDown = (e: PointerEvent<HTMLDivElement>) => {
     e.currentTarget.setPointerCapture(e.pointerId)
     ptrs.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    tap.current.ok = ptrs.current.size === 1
+    tap.current.x = e.clientX; tap.current.y = e.clientY
     if (ptrs.current.size === 2) {
       const [a, b] = [...ptrs.current.values()]
       pinch.current = { d: Math.hypot(a.x - b.x, a.y - b.y), s: z.current.s }
@@ -735,6 +712,7 @@ function ZoomPane({ max, label, sheetClass, children }: { max: number; label: st
     const prev = ptrs.current.get(e.pointerId)
     if (!prev) return
     ptrs.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    if (Math.hypot(e.clientX - tap.current.x, e.clientY - tap.current.y) > 6) tap.current.ok = false
     if (ptrs.current.size === 2) {
       const [a, b] = [...ptrs.current.values()]
       const [cx, cy] = local({ clientX: (a.x + b.x) / 2, clientY: (a.y + b.y) / 2 })
@@ -746,8 +724,19 @@ function ZoomPane({ max, label, sheetClass, children }: { max: number; label: st
     z.current.y += e.clientY - prev.y
     fit(false)
   }
-  const onUp = (e: PointerEvent<HTMLDivElement>) => { ptrs.current.delete(e.pointerId) }
+  const onUp = (e: PointerEvent<HTMLDivElement>) => {
+    ptrs.current.delete(e.pointerId)
+    const t = tap.current
+    if (e.type === 'pointerup' && t.ok && onTap && z.current.s <= 1.05) {
+      const r = sheet.current!.getBoundingClientRect(), nx = (e.clientX - r.left) / r.width
+      // Chờ một nhịp: nếu là bấm đúp (phóng to) thì không lật trang
+      clearTimeout(t.t)
+      if (nx >= 0 && nx <= 1) t.t = window.setTimeout(() => onTap(nx), 230)
+    }
+    t.ok = false
+  }
   const onDouble = (e: { clientX: number; clientY: number }) => {
+    clearTimeout(tap.current.t)
     const [cx, cy] = local(e)
     zoomAt(cx, cy, z.current.s > 1.2 ? 1 : 2.5)
   }
@@ -777,42 +766,79 @@ function ZoomDialog({ title, onBack, children }: { title: string; onBack: () => 
   )
 }
 
-/** Tờ hướng dẫn: mở từ dạng gấp (chỉ thấy bìa) thành tờ trải phẳng 5 trang. */
-const PANELS = 5
+/** Tờ hướng dẫn dạng quyển sách: bìa trước, 4 trang nội dung, bìa sau; bấm để lật từng tờ (3 tờ, mỗi tờ hai mặt). */
 const SHEET_MAX = 4
+const SRC_PANELS = 5 // ảnh front-hd gồm 5 ô: 4 trang nội dung + bìa sau
+const pagePanel = (i: number): CSSProperties => ({ backgroundImage: `url(${guidePages.frontHd})`, backgroundSize: `${SRC_PANELS * 100}% 100%`, backgroundPosition: `${(i / (SRC_PANELS - 1)) * 100}% 0` })
+/** Mỗi tờ: mặt trước (nằm bên phải khi gập lại) và mặt sau (hiện bên trái sau khi lật) */
+const LEAVES: { front: CSSProperties; back: CSSProperties; frontAlt: string; backAlt: string }[] = [
+  { front: coverStyle(guidePages.back), back: pagePanel(0), frontAlt: 'Bìa trước: Cổ Loa, Kẻ Giữ Cửa', backAlt: 'Trang 1: Tổng quan' },
+  { front: pagePanel(1), back: pagePanel(2), frontAlt: 'Trang 2: Chuẩn bị và giai đoạn ẩn vai', backAlt: 'Trang 3: Chi tiết cách chơi' },
+  { front: pagePanel(3), back: pagePanel(4), frontAlt: 'Trang 4: Cơ chế đặc biệt và chiến thắng', backAlt: 'Bìa sau' },
+]
+const STATE_LABEL = ['Bìa trước', 'Trang 1–2', 'Trang 3–4', 'Bìa sau']
 
 function GuideViewer({ onBack }: { onBack: () => void }) {
-  // Mở tờ gấp: các trang chồng lên bìa rồi lần lượt trải ra
+  const [n, setN] = useState(0) // số tờ đã lật sang trái
+  const cur = useRef(0)
+  const quick = prefersReducedMotionNow()
+
   useLayoutEffect(() => {
-    if (prefersReducedMotionNow()) { gsap.set('.bx-cover', { autoAlpha: 0 }); return }
-    // Tờ gấp một chiều (accordion): bìa lật đi, rồi từng trang từ phải sang trái lần lượt mở ra quanh nếp gấp
-    // bên phải của nó (180° -> 0°), trang đang mở tối dần thành sáng như được hắt sáng khi trải phẳng.
-    const panels = gsap.utils.toArray<HTMLElement>('.bx-panel')
-    const STEP = 0.6
-    const t = gsap.timeline({ defaults: { ease: 'power2.inOut' } })
+    LEAVES.forEach((_, k) => gsap.set(`.bx-leaf-${k}`, { rotationY: 0, zIndex: 10 - k }))
+    gsap.set('.bx-book-shift', { xPercent: -25 }) // sách đang đóng: bìa nằm giữa khung
+    if (quick) return
+    gsap.timeline()
       .from('.bx-detail', { autoAlpha: 0, duration: 0.3 })
-      .from('.bx-cover', { scale: 0.7, autoAlpha: 0, duration: 0.45, ease: 'power2.out' }, 0.05)
-      .to('.bx-cover', { rotationY: -110, transformPerspective: 1600, autoAlpha: 0, duration: 0.7 }, 0.6)
-      .from(panels[PANELS - 1], { filter: 'brightness(.55)', duration: 0.5, clearProps: 'filter' }, 0.8)
-    for (let i = PANELS - 2; i >= 0; i--) {
-      t.fromTo(panels[i], { rotationY: 180, transformPerspective: 1600, filter: 'brightness(.4)' },
-        { rotationY: 0, filter: 'brightness(1)', duration: 0.85, clearProps: 'transform,filter' }, 1.05 + (PANELS - 2 - i) * STEP)
+      .from('.bx-leaf-0', { scale: 0.8, autoAlpha: 0, duration: 0.5, ease: 'power2.out', clearProps: 'scale,opacity,visibility' }, 0.05)
+  }, [quick])
+
+  const go = (to: number) => {
+    if (to < 0 || to > LEAVES.length || to === cur.current) return
+    const dir = to > cur.current ? 1 : -1
+    const k = dir > 0 ? cur.current : cur.current - 1 // tờ sẽ lật
+    cur.current = to
+    setN(to)
+    const leaf = `.bx-leaf-${k}`, dur = quick ? 0 : 0.9
+    gsap.set(leaf, { zIndex: 50 }) // đang lật thì nằm trên cùng
+    gsap.to(leaf, { rotationY: dir > 0 ? -180 : 0, duration: dur, ease: 'power2.inOut', overwrite: 'auto',
+      onComplete: () => { gsap.set(leaf, { zIndex: dir > 0 ? 10 + k : 10 - k }) } })
+    gsap.fromTo(`${leaf} .bx-shade`, { opacity: 0 }, { opacity: 0.5, duration: dur / 2, yoyo: true, repeat: 1, ease: 'sine.inOut', overwrite: 'auto' })
+    gsap.to('.bx-book-shift', { xPercent: to === 0 ? -25 : to === LEAVES.length ? 25 : 0, duration: dur, ease: 'power2.inOut', overwrite: 'auto' })
+  }
+
+  useEffect(() => {
+    const key = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'ArrowRight') go(cur.current + 1)
+      else if (e.key === 'ArrowLeft') go(cur.current - 1)
     }
+    window.addEventListener('keydown', key)
+    return () => window.removeEventListener('keydown', key)
   }, [])
 
+  const btn = 'rounded-sm border border-gold px-5 py-2 text-sm font-bold text-gold transition duration-200 hover:-translate-y-0.5 hover:bg-gold hover:text-night active:translate-y-0 disabled:pointer-events-none disabled:opacity-40'
   return (
     <ZoomDialog title={boxText.guideName} onBack={onBack}>
-      <ZoomPane max={SHEET_MAX} label={boxText.guideFrontAlt}
-        sheetClass="flex aspect-[2000/599] w-[min(100%,1500px,calc((100svh-12rem)*3.34))] rounded-md shadow-[0_20px_40px_rgb(0_0_0/.6)]">
-        {Array.from({ length: PANELS }, (_, i) => (
-          <div key={i} className="bx-panel h-full flex-1" style={{
-            backgroundImage: `url(${guidePages.frontHd})`, backgroundSize: `${PANELS * 100}% 100%`,
-            backgroundPosition: `${(i / (PANELS - 1)) * 100}% 0`, transformOrigin: 'right center', backfaceVisibility: 'hidden',
-          }} />
-        ))}
-        {/* Bìa lúc còn gấp, nằm đè lên trang cuối rồi lật đi */}
-        <div className="bx-cover absolute right-0 top-0 h-full rounded-md" style={{ width: `${100 / PANELS}%`, transformOrigin: 'left center', ...coverStyle(guidePages.back) }} />
+      {/* Bấm nửa phải = lật tới, nửa trái = lật lui (chỉ khi chưa phóng to) */}
+      <ZoomPane max={SHEET_MAX} label={boxText.guideFrontAlt} onTap={(nx) => go(cur.current + (nx >= 0.5 ? 1 : -1))}
+        sheetClass="aspect-[800/599] w-[min(100%,1200px,calc((100svh-15rem)*1.336))]">
+        <div className="bx-book-shift absolute inset-0" style={{ perspective: '2400px' }}>
+          {LEAVES.map((l, k) => (
+            <div key={k} className={`bx-leaf-${k} absolute right-0 top-0 h-full w-1/2`} style={{ transformOrigin: 'left center', transformStyle: 'preserve-3d' }}>
+              <div role="img" aria-label={l.frontAlt} className="absolute inset-0 rounded-r-md shadow-[0_14px_30px_rgb(0_0_0/.55)]" style={{ ...l.front, backfaceVisibility: 'hidden' }}>
+                <div className="bx-shade pointer-events-none absolute inset-0 rounded-r-md bg-black opacity-0" />
+              </div>
+              <div role="img" aria-label={l.backAlt} className="absolute inset-0 rounded-l-md" style={{ ...l.back, backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
+                <div className="bx-shade pointer-events-none absolute inset-0 rounded-l-md bg-black opacity-0" />
+              </div>
+            </div>
+          ))}
+        </div>
       </ZoomPane>
+      <div className="mt-4 flex items-center justify-center gap-4">
+        <button type="button" className={btn} disabled={n === 0} onClick={() => go(cur.current - 1)}>Trang trước</button>
+        <span className="min-w-24 text-center text-sm text-mist" aria-live="polite">{STATE_LABEL[n]}</span>
+        <button type="button" className={btn} disabled={n === LEAVES.length} onClick={() => go(cur.current + 1)}>Trang sau</button>
+      </div>
     </ZoomDialog>
   )
 }

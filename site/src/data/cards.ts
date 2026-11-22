@@ -27,10 +27,12 @@ import pawnDo from '../assets/game/tokens/pawn-do.webp'
 
 export type Card = { id: string; name: string; image: string; text: string }
 export type CardGroup = {
-  id: 'trieu-da' | 'an-duong-vuong' | 'mat-chieu'
+  id: 'trieu-da' | 'an-duong-vuong'
   name: string
-  side: 'red' | 'blue' | 'secret'
+  side: 'red' | 'blue'
   cover: string
+  /** Số lá đầu danh sách nằm ở hàng trên (vòng ngoài) của quạt; các lá còn lại ở hàng dưới (vòng trong) */
+  topCount: number
   cards: Card[]
 }
 
@@ -68,7 +70,8 @@ const soldiers = (side: 'blue' | 'red'): Card[] => {
 }
 
 const GATES = ['1A', '1B', '1C', '1D', '2A', '2B', '2C', '2D', '3A', '3B', '3C'] as const
-const secretCards: Card[] = GATES.map((g) => ({
+/** 11 lá Mật chiếu (xếp trong hộp bài phe Triệu Đà) */
+export const secretCards: Card[] = GATES.map((g) => ({
   id: `mat-chieu-${g.toLowerCase()}`,
   name: `Mật chiếu cửa ${g}`,
   image: pick(secretImgs, 'secret', g.toLowerCase()),
@@ -86,16 +89,12 @@ export const cardGroups: CardGroup[] = [
     name: 'Triệu Đà',
     side: 'red',
     cover: cardTrieuDa,
+    topCount: 8, // 2 lá Triệu Đà + 6 quân đỏ ở hàng trên; 11 Mật chiếu ở hàng dưới
     cards: [
       // Bộ game có 2 lá Triệu Đà và 2 lá An Dương Vương (cùng mặt in)
       ...[1, 2].map((k) => ({ id: `trieu-da-${k}`, name: 'Triệu Đà', image: cardTrieuDa, text: 'Tấn công và chiếm thành Cổ Loa' })),
-      ...trongThuy.map((t, i) => ({
-        id: `trong-thuy-${i + 1}`,
-        name: t.name,
-        image: pick(trongThuyImgs, 'characters', `trong-thuy-${i + 1}`),
-        text: `Gián điệp\n${t.skill}`,
-      })),
       ...soldiers('red'),
+      ...secretCards, // Mật chiếu nằm trong hộp phe Triệu Đà
     ],
   },
   {
@@ -103,17 +102,18 @@ export const cardGroups: CardGroup[] = [
     name: 'An Dương Vương',
     side: 'blue',
     cover: cardAdv,
+    topCount: 9, // 2 lá ADV + 7 Trọng Thủy ở hàng trên; 6 quân xanh ở hàng dưới
     cards: [
       ...[1, 2].map((k) => ({ id: `an-duong-vuong-${k}`, name: 'An Dương Vương', image: cardAdv, text: 'Bảo vệ Thành Cổ Loa' })),
+      // Trọng Thủy là nhân vật cài vào phe An Dương Vương nên 7 lá nằm trong hộp phe xanh
+      ...trongThuy.map((t, i) => ({
+        id: `trong-thuy-${i + 1}`,
+        name: t.name,
+        image: pick(trongThuyImgs, 'characters', `trong-thuy-${i + 1}`),
+        text: `Gián điệp\n${t.skill}`,
+      })),
       ...soldiers('blue'),
     ],
-  },
-  {
-    id: 'mat-chieu',
-    name: 'Mật chiếu',
-    side: 'secret',
-    cover: secretCards[0].image,
-    cards: secretCards,
   },
 ]
 

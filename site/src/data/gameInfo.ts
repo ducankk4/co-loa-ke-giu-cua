@@ -1,17 +1,17 @@
 // Nội dung CHÍNH THỨC của team (2026-11-09): vai trò, thành phần, cơ chế chơi, tra cứu nhanh.
 // Chép nguyên văn; chỉ sửa lỗi gõ hiển nhiên (ghi chú "sửa gõ" ngay tại chỗ). Không tự viết thêm luật.
 import { img } from './assets'
-import { cardGroups, pawns, tokens } from './cards'
+import { cardGroups, pawns, secretCards, tokens } from './cards'
 
 const trieuDa = cardGroups.find((g) => g.id === 'trieu-da')!
 /** 7 lá Trọng Thủy (để cho thấy có nhiều lá, mỗi lá một quyền năng) */
-export const trongThuyCards = trieuDa.cards.filter((c) => c.id.startsWith('trong-thuy'))
+export const trongThuyCards = cardGroups.flatMap((g) => g.cards).filter((c) => c.id.startsWith('trong-thuy'))
 /** Thẻ lính mẫu mỗi phe (ảnh có sẵn: 1, 2, 4, 5, 6, 8) */
 export const soldierCards = {
   blue: cardGroups.flatMap((g) => g.cards).filter((c) => c.id.startsWith('quan-adv-')),
   red: cardGroups.flatMap((g) => g.cards).filter((c) => c.id.startsWith('quan-td-')),
 }
-export const missionCards = cardGroups.find((g) => g.id === 'mat-chieu')!.cards
+export const missionCards = secretCards
 
 // ---------- Vai trò ----------
 export const roles = [

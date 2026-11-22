@@ -1,4 +1,4 @@
-import { lazy, Suspense, useLayoutEffect, useRef } from 'react'
+import { useLayoutEffect, useRef } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { img } from '../data/assets'
@@ -9,8 +9,6 @@ import { useReducedMotion } from '../hooks/useReducedMotion'
 import { useTilt } from '../hooks/useTilt'
 import { GoldButton, MetaBar, Scene } from './ui'
 import Split from './Split'
-
-const PawnViewer = lazy(() => import('./PawnViewer'))
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -130,9 +128,6 @@ function PartCell({ p }: { p: Part }) {
         {n === 0 ? (
           // TODO(asset): chưa có ảnh thật, hiện khung trống mờ thay vì bịa ảnh khác
           <div className="pt-empty frame" aria-hidden><span>{p.qty.match(/\d+/)?.[0]}</span></div>
-        ) : p.id === 'token-linh' ? (
-          // Token lính: mô hình 3D thật (Three.js, tải lười); ảnh phẳng làm dự phòng
-          <Suspense fallback={null}><PawnViewer fallback={p.images} label={p.name} /></Suspense>
         ) : p.images.map((src, i) => (
           <img key={src} src={src} alt={n === 1 ? p.name : ''} loading="lazy" width={p.shape === 'card' ? 300 : undefined}
             className={`pt-img tilt ${n > 1 ? 'pt-stack' : ''}`}

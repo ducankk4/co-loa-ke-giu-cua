@@ -100,11 +100,7 @@ body { background: var(--color-night); color: var(--color-mist); font-family: va
 .bx-mapsheet { position: absolute; left: 2%; top: 4%; width: 96%; height: 92%; z-index: 6; cursor: pointer; border-radius: 4px; transition: translate .3s cubic-bezier(.2, .7, .2, 1), scale .3s cubic-bezier(.2, .7, .2, 1), filter .3s; }
 .bx-mapsheet img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; box-shadow: 0 3px 0 #c9b48a, 0 18px 34px -8px rgb(0 0 0 / .85); }
 .bx-mapsheet-aside { position: relative; left: auto; top: auto; width: 90%; height: auto; aspect-ratio: 1600 / 1602; }
-.bx-mapsheet .bx-label { bottom: 50%; transform: translate(-50%, 50%); font-size: 13px; padding: 5px 14px; }
-.bx-mapsheet-aside .bx-label { bottom: 0; transform: translate(-50%, 55%); font-size: 11px; padding: 3px 8px; }
-@media (min-width: 768px) { .bx-mapsheet .bx-label { font-size: 16px; } .bx-mapsheet-aside .bx-label { font-size: 13px; } }
 .bx-mapsheet:is(:hover, :focus-visible) { translate: 0 -10px; scale: 1.02; filter: brightness(1.08) drop-shadow(0 0 16px rgb(242 193 98 / .55)); }
-.bx-mapsheet:is(:hover, :focus-visible) .bx-label { background: var(--color-gold); color: var(--color-night); box-shadow: 0 0 14px rgb(242 193 98 / .6); }
 .bx-mapsheet:active { scale: .99; transition-duration: .08s; }
 .bx-mapsheet:focus-visible { outline: 2px solid var(--color-gold); outline-offset: 4px; }
 @media (max-width: 767px) {
@@ -119,8 +115,6 @@ body { background: var(--color-night); color: var(--color-mist); font-family: va
 .bx-stack:focus-visible { outline: 2px solid var(--color-gold); outline-offset: 4px; border-radius: 6px; }
 .bx-layer { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 5px; object-fit: cover; box-shadow: 0 2px 3px rgb(0 0 0 / .55); }
 .bx-glow { position: absolute; inset: -22%; border-radius: 50%; background: radial-gradient(circle, rgb(242 193 98 / .9), transparent 68%); opacity: 0; pointer-events: none; transition: opacity .3s; }
-.bx-label { position: absolute; left: 50%; bottom: 0; transform: translate(-50%, 55%); z-index: 5; white-space: nowrap; text-align: center; font-size: 11px; line-height: 1.25; padding: 3px 8px; border-radius: 4px; color: var(--color-gold); background: rgb(10 15 44 / .9); border: 1px solid rgb(226 182 92 / .55); transition: background-color .2s, color .2s, box-shadow .2s; }
-@media (min-width: 768px) { .bx-label { font-size: 13px; } }
 
 /* Lòng hộp khi mở (BoxTray): khay vẽ lại theo hộp thật. Kích thước theo % khay (cqw/cqh) */
 .bx-tray {
@@ -132,44 +126,25 @@ body { background: var(--color-night); color: var(--color-mist); font-family: va
 .bx-tray-well { position: absolute; left: 53%; top: 5%; width: 43.5%; height: 90%; border-radius: 3px; background: radial-gradient(ellipse at 50% 40%, #0b1330, #04071a); box-shadow: inset 0 1.2cqw 3cqw rgb(0 0 0 / .9), inset 0 0 0 1px rgb(255 255 255 / .04); }
 .bx-cut { position: absolute; margin: -1cqw; padding: 1cqw; box-sizing: content-box; border-radius: 3px; background: #0a1338; box-shadow: inset 0 .7cqw 1.4cqw rgb(0 0 0 / .85); }
 .bx-tray .bx-stack { position: absolute; transition: translate .3s cubic-bezier(.2, .7, .2, 1), scale .3s cubic-bezier(.2, .7, .2, 1), filter .3s; }
-.bx-t-td { left: 7%; top: 11%; width: 19%; height: 46%; }
-.bx-t-adv { left: 29%; top: 12%; width: 17.5%; height: 44%; }
+.bx-t-td { left: 7%; top: 11.5%; width: 18.5%; height: 45%; }
+.bx-t-adv { left: 28%; top: 11.5%; width: 18.5%; height: 45%; }
 .bx-t-tokens { left: 6%; top: 64%; width: 41%; height: 27%; }
-.bx-t-pawns { left: 82.5%; top: 5%; width: 14%; height: 90%; }
-.bx-t-guide { left: 55%; top: 33.5%; width: 26%; height: 61%; }
-.bx-t-mc { left: 55%; top: 6%; width: 26%; height: 25.5%; }
+.bx-t-pawns { left: 53%; top: 5%; width: 43.5%; height: 90%; }
+.bx-t-guide { left: 61.75%; top: 19.5%; width: 26%; height: 61%; } /* tâm trùng tâm ngăn sâu (.bx-tray-well) */
 /* Rê chuột / focus vào một ngăn: món đó nhấc lên, sáng viền vàng, nhãn đổi màu */
 .bx-tray .bx-stack:is(:hover, :focus-visible) { translate: 0 -1.4cqw; scale: 1.05; filter: brightness(1.12) drop-shadow(0 0 1.2cqw rgb(242 193 98 / .6)); z-index: 3; }
-.bx-tray .bx-t-pawns:is(:hover, :focus-visible) { translate: none; scale: 1; filter: brightness(1.3) drop-shadow(0 0 .8cqw rgb(242 193 98 / .5)); }
-.bx-t-pawns .bx-pawn { transition: translate .3s; }
+.bx-tray .bx-t-pawns:is(:hover, :focus-visible) { translate: none; scale: 1; filter: brightness(1.3) drop-shadow(0 0 .8cqw rgb(242 193 98 / .5)); z-index: 1; }
+/* Nút quân phủ cả ngăn nhưng chỉ từng quân nhận chuột, và luôn nằm dưới quyển hướng dẫn (không che, không chặn hiệu ứng chọn của quyển) */
+.bx-tray .bx-t-pawns { pointer-events: none; z-index: 1; }
+.bx-tray .bx-t-guide { z-index: 2; }
+.bx-t-pawns .bx-pawn { pointer-events: auto; cursor: pointer; transition: translate .3s; }
 .bx-t-pawns:hover .bx-pawn { translate: -50% -62%; }
-.bx-tray .bx-stack:is(:hover, :focus-visible) .bx-label { background: var(--color-gold); color: var(--color-night); box-shadow: 0 0 14px rgb(242 193 98 / .6); }
 .bx-tray .bx-stack:active { scale: .98; transition-duration: .08s; }
-.bx-t-td .bx-label, .bx-t-adv .bx-label { white-space: normal; width: 104%; }
-.bx-t-pawns .bx-label { left: auto; right: 2%; bottom: auto; top: 3%; transform: none; }
 .bx-t-pawns .bx-glow { display: none; }
-/* Khay hẹp (mobile): nhãn nhỏ lại để không đè nhau */
-@container (max-width: 440px) { .bx-tray .bx-label { font-size: 9px; padding: 2px 4px; } .bx-t-tokens .bx-label { bottom: 4%; } }
 .bx-deck { position: absolute; inset: 0; border-radius: 3px; box-shadow: 0 .5cqw 0 rgb(0 0 0 / .45), 0 1.2cqw 2cqw rgb(0 0 0 / .65); }
 /* Hộp bài tuck box */
 .bx-deck-face { position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; overflow: hidden; border-radius: 3px; background: inherit; }
-.bx-deck-stack { position: absolute; left: 6%; right: 6%; top: 3%; bottom: 3%; z-index: 1; transition: translate .3s cubic-bezier(.2, .7, .2, 1), filter .3s; }
-.bx-deck-stack img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 3px; box-shadow: 0 .2cqw .4cqw rgb(0 0 0 / .6); }
-.bx-deck-stack img:last-child { box-shadow: 0 0 0 1px rgb(242 193 98 / .7), 0 .3cqw .8cqw rgb(0 0 0 / .6); }
 /* Nắp gập: bản lề ở mép trên hộp, lúc đóng phủ phần đầu mặt hộp */
-.bx-tuck { position: absolute; left: 0; right: 0; top: 0; height: 19%; z-index: 3; transform-origin: 50% 0; transform-style: preserve-3d; z-index: 4; }
-.bx-tuck-out, .bx-tuck-in { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 3px 3px 45% 45% / 3px 3px 60% 60%; }
-.bx-tuck-out { box-shadow: 0 .35cqw .5cqw rgb(0 0 0 / .45), inset 0 -1px 0 rgb(242 193 98 / .75); }
-.bx-deck-red .bx-tuck-out { background: linear-gradient(#5e2a21, #47201a); }
-.bx-deck-blue .bx-tuck-out { background: linear-gradient(#1a2858, #131d47); }
-.bx-tuck-in { transform: rotateX(180deg); background: linear-gradient(#d9cdb4, #b9ab8e); box-shadow: inset 0 0 0 1px rgb(0 0 0 / .2); }
-/* Hai tai (dust flap) bung ra ở hai góc miệng hộp */
-.bx-ear { position: absolute; bottom: 100%; width: 17%; height: 13%; z-index: 2; opacity: 0; visibility: hidden; transform-origin: 50% 100%; background: linear-gradient(#cdbf9f, #a99a7b); clip-path: polygon(0 100%, 12% 0, 88% 0, 100% 100%); }
-.bx-ear-l { left: -5%; }
-.bx-ear-r { right: -5%; }
-/* Ánh vàng hắt lên từ miệng hộp khi mở */
-.bx-deck-light { position: absolute; left: -35%; right: -35%; top: -50%; height: 80%; z-index: 2; opacity: 0; visibility: hidden; pointer-events: none; mix-blend-mode: screen;
-  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgb(255 238 190 / .95), rgb(242 193 98 / .5) 40%, transparent 72%); }
 /* Hộp bài đang được đưa ra giữa (DeckFocus): ô trong khay để trống */
 .bx-tray .bx-stack.bx-away { visibility: hidden !important; }
 /* DeckFocus: khung là container để hộp và lá co theo; hộp ở giữa dưới, lá xuất phát từ tâm hộp rồi xòe quạt phía trên */
@@ -183,10 +158,9 @@ body { background: var(--color-night); color: var(--color-mist); font-family: va
 .bx-deck-frame { position: absolute; inset: 0; width: 100%; height: 100%; fill: none; stroke: var(--color-gold); stroke-width: 1; vector-effect: non-scaling-stroke; opacity: .9; }
 .bx-deck-logo { position: relative; width: 112%; max-width: none; }
 .bx-coin-well { position: absolute; inset: 0; }
-.bx-coin { position: absolute; width: 24%; aspect-ratio: 1; border-radius: 50%; box-shadow: 0 .4cqw .8cqw rgb(0 0 0 / .65); }
+.bx-coin { position: absolute; width: 26%; aspect-ratio: 1; border-radius: 50%; box-shadow: 0 .4cqw .8cqw rgb(0 0 0 / .65); }
 .bx-pawn { position: absolute; width: 2.9cqw; aspect-ratio: 224 / 539; translate: -50% -50%; filter: drop-shadow(0 .25cqw .3cqw rgb(0 0 0 / .6)); }
 .bx-booklet { position: absolute; inset: 0; background-repeat: no-repeat; border-radius: 2px; box-shadow: 0 1cqw 2cqw rgb(0 0 0 / .75); }
-.bx-mc-pile { position: absolute; left: 50%; top: 50%; width: 25.5cqh; height: 26cqw; translate: -50% -50%; rotate: -90deg; }
 
 /* Lá trong lưới chi tiết: nhấc lên, phóng nhẹ, viền vàng sáng khi rê chuột */
 .bx-card img { box-shadow: 0 14px 26px rgb(0 0 0 / .55); transition: translate .25s cubic-bezier(.2, .7, .2, 1), scale .25s cubic-bezier(.2, .7, .2, 1), box-shadow .25s; }
@@ -344,5 +318,3 @@ body { background: var(--color-night); color: var(--color-mist); font-family: va
 .fq-q:hover .fq-chev { translate: 0 2px; }
 .fq-chev { transition: transform .3s, translate .2s; }
 
-/* Token lính 3D (PawnViewer): khung vẽ lớn hơn ô ảnh thường, tràn nhẹ ra ngoài để quân nổi bật */
-.pt-3d { width: 100%; height: 15rem; margin-block: -2rem; filter: drop-shadow(0 14px 16px rgb(0 0 0 / .5)); }

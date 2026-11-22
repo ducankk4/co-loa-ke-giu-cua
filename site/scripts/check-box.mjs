@@ -78,7 +78,7 @@ await shot('5-open')
   console.log('bản đồ nằm cạnh hộp:', await p.locator('.bx-side [data-stack="map"]').count() === 1, '| focus trả về bản đồ:', await p.evaluate(() => document.activeElement?.getAttribute('data-stack')))
 }
 
-const stackTd = p.locator('[data-stack="trieu-da"]')
+const stackTd = p.locator('[data-stack="an-duong-vuong"]') // hộp xanh: có 7 lá Trọng Thủy
 await stackTd.click() // một lần: hộp bay ra giữa, tự mở, lá xòe quạt
 await p.waitForTimeout(500)
 await shot('5f-deck-flying')
@@ -102,7 +102,7 @@ await p.keyboard.press('Escape')
 await p.waitForTimeout(500)
 await shot('7b-deck-returning')
 await p.waitForTimeout(1500)
-console.log('Esc 2 -> focus:', await p.evaluate(() => document.activeElement?.getAttribute('data-stack')))
+console.log('Esc 2 -> focus (về hộp xanh):', await p.evaluate(() => document.activeElement?.getAttribute('data-stack')))
 await shot('8-back-map')
 
 // Nhóm token: mở, kiểm tra đủ 3 loại, Esc về map
@@ -115,20 +115,25 @@ await p.waitForTimeout(400)
 console.log('Esc token -> focus:', await p.evaluate(() => document.activeElement?.getAttribute('data-stack')))
 
 await p.locator('[data-stack="guide"]').click()
-await p.waitForTimeout(800)
-await shot('9a-guide-unfolding')
-await p.waitForTimeout(1200)
-await shot('9-guide-flat')
-// Phóng to tờ hướng dẫn bằng cuộn chuột tại trang đầu, rồi kéo sang phải
+await p.waitForTimeout(1000)
+await shot('9-guide-closed') // quyển sách: chỉ thấy bìa trước
+// Lật từng tờ bằng nút Trang sau (bìa -> trang 1-2 -> trang 3-4 -> bìa sau), giữa chừng chụp cảnh đang lật
+const next = p.getByRole('button', { name: 'Trang sau' })
+await next.click(); await p.waitForTimeout(450); await shot('9a-guide-flipping'); await p.waitForTimeout(900)
+await shot('9b-guide-spread-1')
+await next.click(); await p.waitForTimeout(1200); await shot('9c-guide-spread-2')
+await next.click(); await p.waitForTimeout(1200); await shot('9d-guide-back-cover')
+// Bấm nửa trái của sách để lật lui
 {
-  const vb = await p.locator('.bx-detail [role="img"]').boundingBox()
-  await p.mouse.move(vb.x + vb.width * 0.12, vb.y + vb.height * 0.4)
+  const vb = await p.locator('.bx-detail [role="img"]').first().boundingBox()
+  await p.mouse.click(vb.x + 40, vb.y + vb.height / 2)
+  await p.waitForTimeout(1300)
+  await shot('9e-guide-tap-back')
+  // Phóng to bằng cuộn chuột
+  await p.mouse.move(vb.x + vb.width * 0.3, vb.y + vb.height * 0.4)
   for (let i = 0; i < 8; i++) { await p.mouse.wheel(0, -120); await p.waitForTimeout(40) }
   await p.waitForTimeout(500)
   await shot('10-guide-zoomed')
-  await p.mouse.down(); await p.mouse.move(vb.x + vb.width * 0.12 - 300, vb.y + vb.height * 0.4, { steps: 8 }); await p.mouse.up()
-  await p.waitForTimeout(300)
-  await shot('10b-guide-panned')
 }
 await p.keyboard.press('Escape')
 await p.waitForTimeout(400)
