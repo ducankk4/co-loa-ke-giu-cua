@@ -1,11 +1,12 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { meta } from '../data/content'
 
-type BtnProps = { href: string; children: ReactNode; solid?: boolean; className?: string }
+type BtnProps = { href: string; children: ReactNode; className?: string }
 
-export function GoldButton({ href, children, solid = false, className = '' }: BtnProps) {
+/** Mọi nút dùng chung một kiểu: nền vàng đặc, chữ tối, không khung viền (theo nút "Đặt trước ngay") */
+export function GoldButton({ href, children, className = '' }: BtnProps) {
   return (
-    <a href={href} className={`btn ${solid ? 'btn-solid' : 'btn-ghost frame font-ui'} ${className}`}>
+    <a href={href} className={`btn btn-solid ${className}`}>
       {children}
     </a>
   )

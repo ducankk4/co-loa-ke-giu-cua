@@ -25,7 +25,8 @@ document.addEventListener('click', (e) => {
   const target = id ? document.getElementById(id) : null
   if (!target) return
   e.preventDefault()
-  const top = (target.closest('.pin-spacer') ?? target).getBoundingClientRect().top + scrollY
+  // scroll-margin-top của đích (vd. scroll-mt-28) để header cố định không che
+  const top = (target.closest('.pin-spacer') ?? target).getBoundingClientRect().top + scrollY - (parseFloat(getComputedStyle(target).scrollMarginTop) || 0)
   if (prefersReducedMotion()) window.scrollTo(0, top)
   else gsap.to(window, { scrollTo: top, duration: 1, ease: 'power2.inOut', overwrite: true })
   history.replaceState(null, '', `#${id}`)

@@ -1,4 +1,4 @@
-// Kiểm tra hộp 3D: đóng -> cuộn chuột phóng to/thu nhỏ -> kéo xoay xem đáy/cạnh -> mở -> chồng Triệu Đà -> lá Trọng Thủy -> Esc x2 -> tờ hướng dẫn -> đóng hộp.
+// Kiểm tra hộp 3D: đóng -> cuộn chuột phóng to/thu nhỏ -> kéo xoay xem đáy/cạnh -> mở -> bản đồ (xem, phóng, quay lại) -> hộp bài Triệu Đà (bay ra giữa, tự mở, xòe quạt) -> lá Trọng Thủy -> Esc x2 -> tờ hướng dẫn -> đóng hộp.
 // node scripts/check-box.mjs <tiền-tố> [rộng] [cao]   (cần `npx vite preview --port 4173`)
 import { chromium } from 'playwright'
 const [out = 'box', w = '1440', h = '900'] = process.argv.slice(2)
@@ -56,12 +56,42 @@ await shot('4-opening')
 await p.waitForTimeout(2600)
 await shot('5-open')
 
+// Bản đồ phủ lên khay: rê chuột (nhấc lên) -> bấm xem chi tiết -> cuộn phóng to -> Quay lại: bản đồ ra cạnh hộp, dưới nắp
+{
+  const map = p.locator('[data-stack="map"]')
+  await map.hover()
+  await p.waitForTimeout(400)
+  await shot('5a-map-hover')
+  await map.click()
+  await p.waitForTimeout(900)
+  await shot('5b-map-view')
+  const v = await p.locator('.bx-detail [role="img"]').boundingBox()
+  await p.mouse.move(v.x + v.width * 0.3, v.y + v.height * 0.4)
+  for (let i = 0; i < 6; i++) { await p.mouse.wheel(0, -120); await p.waitForTimeout(40) }
+  await p.waitForTimeout(500)
+  await shot('5c-map-zoom')
+  await p.locator('.bx-back').click()
+  await p.waitForTimeout(300)
+  await shot('5d-map-flying')
+  await p.waitForTimeout(1500)
+  await shot('5e-map-aside')
+  console.log('bản đồ nằm cạnh hộp:', await p.locator('.bx-side [data-stack="map"]').count() === 1, '| focus trả về bản đồ:', await p.evaluate(() => document.activeElement?.getAttribute('data-stack')))
+}
+
 const stackTd = p.locator('[data-stack="trieu-da"]')
-await stackTd.click()
-await p.waitForTimeout(1400)
+await stackTd.click() // một lần: hộp bay ra giữa, tự mở, lá xòe quạt
+await p.waitForTimeout(500)
+await shot('5f-deck-flying')
+await p.waitForTimeout(800)
+await shot('5g-deck-opening')
+await p.waitForTimeout(2200)
 await shot('6-fan')
-await p.locator('[data-card="trong-thuy-3"]').scrollIntoViewIfNeeded()
-await p.locator('[data-card="trong-thuy-3"]').click()
+console.log('quạt lá:', await p.locator('.bx-fan-card').count(), 'lá | ô trong khay đang ẩn:', await stackTd.evaluate((n) => n.classList.contains('bx-away')))
+// Lá trong quạt chồng lên nhau: bấm bằng sự kiện trực tiếp (giữa lá có thể bị lá bên cạnh che)
+await p.locator('[data-card="trong-thuy-3"]').hover({ position: { x: 10, y: 10 }, force: true })
+await p.waitForTimeout(300)
+await shot('6b-fan-hover')
+await p.locator('[data-card="trong-thuy-3"]').dispatchEvent('click')
 await p.waitForTimeout(900)
 await shot('7-card')
 console.log('khung thông tin:', JSON.stringify(await p.locator('.bx-zoom-info').innerText()))
@@ -69,7 +99,9 @@ await p.keyboard.press('Escape')
 await p.waitForTimeout(300)
 console.log('Esc 1 -> focus:', await p.evaluate(() => document.activeElement?.getAttribute('data-card')))
 await p.keyboard.press('Escape')
-await p.waitForTimeout(400)
+await p.waitForTimeout(500)
+await shot('7b-deck-returning')
+await p.waitForTimeout(1500)
 console.log('Esc 2 -> focus:', await p.evaluate(() => document.activeElement?.getAttribute('data-stack')))
 await shot('8-back-map')
 

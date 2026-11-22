@@ -1,7 +1,7 @@
 // Nội dung CHÍNH THỨC của team (2026-11-09): vai trò, thành phần, cơ chế chơi, tra cứu nhanh.
 // Chép nguyên văn; chỉ sửa lỗi gõ hiển nhiên (ghi chú "sửa gõ" ngay tại chỗ). Không tự viết thêm luật.
 import { img } from './assets'
-import { cardGroups, tokens } from './cards'
+import { cardGroups, pawns, tokens } from './cards'
 
 const trieuDa = cardGroups.find((g) => g.id === 'trieu-da')!
 /** 7 lá Trọng Thủy (để cho thấy có nhiều lá, mỗi lá một quyền năng) */
@@ -35,9 +35,9 @@ export const roles = [
 
 // ---------- Thành phần bộ game ----------
 // image: null = chưa có ảnh (TODO(asset)); qty dạng chữ vì có mục tính "mỗi người"/"mỗi đội"
-export type Part = { id: string; name: string; qty: string; body: string; images: string[]; shape: 'card' | 'token' | 'square' | 'wide' }
+export type Part = { id: string; name: string; qty: string; body: string; images: string[]; shape: 'card' | 'token' | 'pawn' | 'square' | 'wide' }
 export const parts: Part[] = [
-  { id: 'nhan-vat', name: 'Thẻ nhân vật', qty: 'An Dương Vương, Triệu Đà, 7 Trọng Thủy', shape: 'card',
+  { id: 'nhan-vat', name: 'Thẻ nhân vật', qty: '2 An Dương Vương, 2 Triệu Đà, 7 Trọng Thủy', shape: 'card',
     images: [img.cardAdv, img.cardTrieuDa, img.cardTrongThuy],
     body: 'Cho biết bạn giữ vai nào trong ván. Thẻ Trọng Thủy có 7 lá, mỗi lá một quyền năng.' }, // TODO(copy): câu mô tả do agent chính viết từ phần Vai trò
   { id: 'linh', name: 'Thẻ lính', qty: '16 lá mỗi người', shape: 'card',
@@ -46,14 +46,14 @@ export const parts: Part[] = [
   { id: 'nhiem-vu', name: 'Thẻ nhiệm vụ', qty: '11 lá', shape: 'card',
     images: [img.secret],
     body: 'Có 11 lá thẻ nhiệm vụ. Bên Triệu Đà sẽ bốc 1 lá nhiệm vụ ở đầu ván để giao cho Trọng Thuỷ thực hiện.' },
-  { id: 'linh-tt', name: 'Bộ thẻ lính riêng cho Trọng Thuỷ', qty: '11 lá', shape: 'card',
-    images: [], // TODO(asset): chưa có ảnh bộ thẻ này
-    body: 'Dùng sau khi Trọng Thuỷ bị đoán. Sau vòng 3, Trọng Thuỷ bị đoán thì sẽ bốc 3/11 lá bài trong bộ này rồi quay về phe Triệu Đà.' },
-  { id: 'token-linh', name: 'Token lính', qty: '50 token mỗi đội', shape: 'token',
-    images: [tokens.xanh, tokens.do],
+  { id: 'linh-tt', name: 'Bộ thẻ lính riêng cho Trọng Thuỷ', qty: '12 lá', shape: 'card',
+    images: [], // TODO(asset): chưa có ảnh bộ thẻ này. Team sửa 11 -> 12 lá (2026-11-18)
+    body: 'Dùng sau khi Trọng Thuỷ bị đoán. Sau vòng 3, Trọng Thuỷ bị đoán thì sẽ bốc 3/12 lá bài trong bộ này rồi quay về phe Triệu Đà.' },
+  { id: 'token-linh', name: 'Token lính', qty: '50 token mỗi đội', shape: 'pawn',
+    images: [pawns.xanh, pawns.do], // quân nhựa xanh/đỏ (team xác nhận 2026-11-18); ảnh render team gửi, tô màu bằng scripts/make-pawns.mjs
     body: 'Những token này sẽ dùng để biểu thị cho số quân còn lại ở mỗi cửa sau khi 2 phe so quân với nhau. Đặc biệt, những token này vẫn sẽ được dùng cho những vòng kế tiếp.' },
   { id: 'token-thang', name: 'Token chiến thắng', qty: '16 token', shape: 'token',
-    images: [], // TODO(asset): chưa có ảnh token chiến thắng
+    images: [tokens.xanh, tokens.do], // đĩa tròn ADV/Triệu Đà (team xác nhận 2026-11-18)
     body: 'Những token này để quy ước phe nào thắng của các cổng sau khi so quân.' },
   { id: 'token-no', name: 'Token nỏ', qty: '2 token', shape: 'token',
     images: [tokens.no],
@@ -101,7 +101,8 @@ export const rulesWin = {
 }
 
 export const rulesSpecial = [
-  { n: '04', title: 'Cơ chế đặc biệt: Trọng Thủy', image: img.secret, body: [
+  // link: nút dẫn về chỗ đã trình bày lá bài. TODO(copy): nhãn nút do agent viết
+  { n: '04', title: 'Cơ chế đặc biệt: Trọng Thủy', image: img.secret, link: { href: '#tp-nhiem-vu', label: 'Xem 11 thẻ nhiệm vụ' }, body: [
     'Trọng Thủy phải bí mật thực hiện nhiệm vụ do phe Triệu Đà giao từ đầu ván.',
     'Nếu hoàn thành nhiệm vụ, phe Triệu Đà không chịu tổn thất. Nếu thất bại, một nửa tổng số token lính hiện có trên bản đồ của phe Triệu Đà sẽ bị loại bỏ.',
   ] },
@@ -110,7 +111,7 @@ export const rulesSpecial = [
     'Tại ô sử dụng Nỏ thần, phe An Dương Vương được giữ lại một nửa số quân lính.',
     'Nỏ thần có thể được sử dụng ở bất kỳ vòng nào nhưng chỉ được kích hoạt duy nhất một lần trong toàn bộ ván chơi. Nếu phe An Dương Vương đoán sai danh tính Trọng Thủy, quyền sử dụng Nỏ thần sẽ bị mất.',
   ] },
-  { n: '06', title: 'Cơ chế chức năng: Quyền năng Trọng Thủy', image: img.cardTrongThuy, body: [
+  { n: '06', title: 'Cơ chế chức năng: Quyền năng Trọng Thủy', image: img.cardTrongThuy, link: { href: '#nhan-vat', character: 'tt', label: 'Xem 7 thẻ Trọng Thủy' }, body: [
     'Khi muốn sử dụng quyền năng Trọng Thủy để gia tăng sức mạnh tại một ô, phe Triệu Đà yêu cầu phe An Dương Vương úp toàn bộ thẻ nhân vật đang sở hữu.',
     'Phe Triệu Đà lấy cả 3 thẻ nhân vật, đọc nội dung trên thẻ Trọng Thủy để xác định quyền năng, sau đó úp xuống và trả lại cho phe An Dương Vương.',
   ], note: 'Lưu ý: Quyền năng Trọng Thủy phải được sử dụng tại một ô cụ thể và trước khi tiến hành so quân.' },

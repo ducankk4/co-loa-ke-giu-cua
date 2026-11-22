@@ -40,7 +40,7 @@ export default function Faq() {
               role="tab" type="button" id={`${uid}-tab-${i}`} aria-selected={i === active} aria-controls={`${uid}-panel`}
               tabIndex={i === active ? 0 : -1}
               onClick={() => setActive(i)} onKeyDown={(e) => onKey(e, i)}
-              className={`fq-tab font-ui ${i === active ? 'frame fq-tab-on' : ''}`}
+              className={`fq-tab font-ui ${i === active ? 'fq-tab-on' : ''}`}
             >
               {g.title}
             </button>

@@ -7,7 +7,7 @@ import { Scene } from './ui'
 const vnd = (n: number | null) => (n == null ? 'Sẽ cập nhật' : `${n.toLocaleString('vi-VN')}đ`)
 type Status = { kind: 'idle' | 'sending' } | { kind: 'ok'; code: string } | { kind: 'error'; msg: string }
 
-const field = 'mt-1 w-full border-0 border-b border-gold/50 bg-transparent px-0 py-2 text-white outline-none transition-colors focus:border-gold'
+const field = 'mt-1 w-full border-0 border-b border-gold/50 bg-transparent px-0 py-2 text-white outline-none transition-[border-color,box-shadow] hover:border-gold/80 focus:border-gold focus:shadow-[0_1px_0_0_var(--color-gold)]'
 
 export default function Preorder() {
   const requestId = useRef(crypto.randomUUID())

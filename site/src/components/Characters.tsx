@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { ScrollToPlugin } from 'gsap/ScrollToPlugin'
@@ -7,6 +7,7 @@ import { roles as characters, trongThuyCards } from '../data/gameInfo'
 import { useReducedMotion } from '../hooks/useReducedMotion'
 import { GoldButton } from './ui'
 import Split from './Split'
+import { setCharacterNav } from '../lib/characterNav'
 
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin)
 
@@ -27,7 +28,7 @@ function Info({ c, k }: { c: (typeof characters)[number]; k: number }) {
       <h2 className="h2 mb-5"><Split text={c.name} /></h2>
       <p className="cv-rest body mb-5 md:mb-8 max-md:text-[0.95rem] max-md:leading-relaxed">{c.body}</p>
       {'note' in c && <p className="cv-rest mb-5 text-sm italic text-gold md:mb-8">{c.note}</p>}
-      <div className="cv-rest max-md:hidden"><GoldButton href="#dat-truoc" solid>Đặt trước sản phẩm</GoldButton></div>
+      <div className="cv-rest max-md:hidden"><GoldButton href="#dat-truoc">Đặt trước sản phẩm</GoldButton></div>
     </div>
   )
 }
@@ -118,6 +119,18 @@ export default function Characters() {
     gsap.to(window, { scrollTo: t.start + (t.end - t.start) * (k / (n - 1)), duration: 0.8, ease: 'power2.inOut', overwrite: true })
   }
 
+  // Nơi khác (vd. Cơ chế 06) gọi goToCharacter('tt') để tới đúng điểm dừng của nhân vật đó
+  useEffect(() => {
+    setCharacterNav((id) => {
+      const k = characters.findIndex((c) => c.id === id)
+      if (k < 0) return false
+      if (!st.current) { setActive(k); return false } // không có ghim (giảm chuyển động): cuộn mặc định tới #nhan-vat
+      go(k)
+      return true
+    })
+    return () => setCharacterNav(null)
+  })
+
   const shown = reduced ? [characters[active]] : characters
   return (
     <section ref={root} id="nhan-vat" className="relative isolate flex min-h-[100svh] flex-col overflow-hidden px-5 pt-24 md:px-10">
@@ -139,7 +152,7 @@ export default function Characters() {
       <div role="tablist" aria-label="Chọn nhân vật" className="relative z-10 flex justify-center gap-2 pb-8 pt-6 md:gap-3">
         {characters.map((x, k) => (
           <button key={x.id} role="tab" aria-selected={k === active} onClick={() => go(k)}
-            className={`frame whitespace-nowrap px-3 py-2 text-xs font-bold transition-colors md:px-5 md:text-sm ${k === active ? 'bg-gold text-night' : 'bg-night/70 text-gold hover:bg-night'}`}>
+            className={`cv2-tab whitespace-nowrap px-3 py-2 text-xs font-bold md:px-5 md:text-sm ${k === active ? 'bg-gold text-night' : 'bg-night/70 text-gold'}`}>
             {x.name}
           </button>
         ))}

@@ -3,5 +3,6 @@ export const contact = {
   email: null as string | null,
   fanpage: null as string | null,
   zalo: null as string | null,
+  instagram: null as string | null,
   tiktok: null as string | null,
 }

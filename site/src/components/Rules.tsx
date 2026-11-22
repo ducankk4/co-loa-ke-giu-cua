@@ -4,7 +4,8 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { img } from '../data/assets'
 import { rulesIntro, whoIsWho, eyesClosed } from '../data/content'
 import { rulesSetup, rulesRound, rulesWin, rulesSpecial, soldierCards } from '../data/gameInfo'
-import { tokens } from '../data/cards'
+import { pawns } from '../data/cards'
+import { goToCharacter } from '../lib/characterNav'
 import { prefersReducedMotion, useReducedMotion } from '../hooks/useReducedMotion'
 import { Backdrop, GoldButton, MetaBar, Scene } from './ui'
 
@@ -167,8 +168,11 @@ function RoundArt({ i }: { i: number }) {
   return (
     <div className="relative h-full aspect-square">
       <img src={img.mapImage} alt="Bản đồ với token lính còn lại" className="h-full w-full rounded-md object-cover shadow-xl" loading="lazy" />
-      <img src={tokens.xanh} alt="" className="absolute -left-2 bottom-1 w-9 drop-shadow-lg md:w-11" loading="lazy" />
-      <img src={tokens.do} alt="" className="absolute -right-2 top-1 w-9 drop-shadow-lg md:w-11" loading="lazy" />
+      {/* Token lính = quân nhựa xanh/đỏ */}
+      <img src={pawns.xanh} alt="" className="absolute -left-1 bottom-1 h-12 drop-shadow-lg md:h-14" loading="lazy" />
+      <img src={pawns.xanh} alt="" className="absolute left-4 bottom-0 h-10 drop-shadow-lg md:h-12" loading="lazy" />
+      <img src={pawns.do} alt="" className="absolute -right-1 top-1 h-12 drop-shadow-lg md:h-14" loading="lazy" />
+      <img src={pawns.do} alt="" className="absolute right-4 top-3 h-10 drop-shadow-lg md:h-12" loading="lazy" />
     </div>
   )
 }
@@ -178,9 +182,33 @@ export default function Rules() {
   useLayoutEffect(() => {
     if (reduced) return
     const ctx = gsap.context(() => {
-      // 02: các bước hiện lần lượt khi cuộn tới (không ghim)
-      gsap.timeline({ scrollTrigger: { trigger: '.rl-timeline', start: 'top 75%' }, defaults: { ease: 'power3.out', duration: 0.7 } })
-        .from('.rl-step', { y: 36, opacity: 0, stagger: 0.28 })
+      // 02 và 04–06: từng mục hiện dần THEO CUỘN (scrub), cuộn thêm một đoạn mới ra mục tiếp theo; cuộn ngược thì lùi lại.
+      // Mỗi mục: số/vòng tròn bật ra -> hình bay vào -> tiêu đề -> chữ. Không ghim.
+      const enter = (tl: gsap.core.Timeline, el: Element, at: number) => {
+        const q = gsap.utils.selector(el)
+        tl.from(q('.rv-badge'), { scale: 0, rotation: -90, autoAlpha: 0, duration: 0.3, ease: 'back.out(2.2)' }, at)
+          .from(q('.rv-art'), { y: 70, rotation: -10, scale: 0.7, autoAlpha: 0, duration: 0.45, ease: 'back.out(1.4)' }, at + 0.12)
+          .from(q('.rv-title'), { y: 26, autoAlpha: 0, duration: 0.3 }, at + 0.3)
+          .from(q('.rv-text'), { y: 20, autoAlpha: 0, duration: 0.3, stagger: 0.08 }, at + 0.38)
+      }
+      const mm = gsap.matchMedia()
+      mm.add('(min-width: 768px)', () => {
+        // Desktop: các mục nằm cùng hàng, một timeline cho cả hàng; vạch nối chạy tới số tiếp theo
+        const steps = gsap.utils.toArray<HTMLElement>('.rl-step')
+        const t2 = gsap.timeline({ defaults: { ease: 'power2.out' }, scrollTrigger: { trigger: '.rl-timeline', start: 'top 88%', end: 'bottom 45%', scrub: 0.8 } })
+        t2.fromTo('.rl-line', { scaleX: 0 }, { scaleX: 1, duration: steps.length, ease: 'none' }, 0)
+        steps.forEach((el, i) => enter(t2, el, i))
+        const specs = gsap.utils.toArray<HTMLElement>('.rl-spec')
+        const t4 = gsap.timeline({ defaults: { ease: 'power2.out' }, scrollTrigger: { trigger: '.rl-specs', start: 'top 88%', end: 'center 45%', scrub: 0.8 } })
+        specs.forEach((el, i) => enter(t4, el, i))
+      })
+      mm.add('(max-width: 767px)', () => {
+        // Mobile: các mục xếp dọc, mỗi mục tự hiện khi cuộn tới nó
+        gsap.utils.toArray<HTMLElement>('.rl-step, .rl-spec').forEach((el) => {
+          enter(gsap.timeline({ defaults: { ease: 'power2.out' }, scrollTrigger: { trigger: el, start: 'top 90%', end: 'top 50%', scrub: 0.8 } }), el, 0)
+        })
+        gsap.fromTo('.rl-line', { scaleY: 0 }, { scaleY: 1, ease: 'none', scrollTrigger: { trigger: '.rl-timeline', start: 'top 80%', end: 'bottom 60%', scrub: 0.8 } })
+      })
       // 03: dòng An Dương Vương cùng lính xanh từ trái, rồi dòng Triệu Đà cùng lính đỏ từ phải
       gsap.timeline({ scrollTrigger: { trigger: '.rl-win', start: 'top 60%' }, defaults: { ease: 'power3.out', duration: 0.8 } })
         .from('.win-adv', { xPercent: -60, opacity: 0 })
@@ -206,13 +234,14 @@ export default function Rules() {
         <span className="rl-num mb-2 block text-4xl md:text-6xl" aria-hidden>{rulesRound.n}</span>
         <h2 className="h2 mb-12 max-w-3xl">{rulesRound.title}</h2>
         <ol className="rl-timeline">
+          <span className="rl-line" aria-hidden />
           {rulesRound.steps.map((s, i) => (
             <li key={s.title} className="rl-step">
-              <span className="rl-stepno" aria-hidden>{i + 1}</span>
-              <div className="rl-art md:mt-6"><RoundArt i={i} /></div>
-              <h3 className="font-display text-xl font-bold text-gold md:mt-2"><span className="sr-only">Bước {i + 1}: </span>{s.title}</h3>
+              <span className="rl-stepno rv-badge" aria-hidden>{i + 1}</span>
+              <div className="rl-art rv-art md:mt-6"><RoundArt i={i} /></div>
+              <h3 className="rv-title font-display text-xl font-bold text-gold md:mt-2"><span className="sr-only">Bước {i + 1}: </span>{s.title}</h3>
               <div className="mt-2 grid gap-2 text-[.95rem] leading-relaxed text-mist">
-                {s.body.map((t) => <p key={t}>{t}</p>)}
+                {s.body.map((t) => <p key={t} className="rv-text">{t}</p>)}
               </div>
             </li>
           ))}
@@ -227,7 +256,7 @@ export default function Rules() {
           {rulesWin.sides.map((l) => {
             const td = l.side === 'td'
             return (
-              <div key={l.side} className={`win-row-${l.side} frame ${td ? 'frame-red bg-red-td/30' : 'frame-blue bg-blue-adv/25'} flex items-center gap-5 p-6 md:p-8`}>
+              <div key={l.side} className={`win-row-${l.side} rl-winrow frame ${td ? 'frame-red bg-red-td/30' : 'frame-blue bg-blue-adv/25'} flex items-center gap-5 p-6 md:p-8`}>
                 <div className="relative w-24 shrink-0 md:w-32">
                   <div className="moon absolute inset-2" aria-hidden />
                   <img src={td ? img.soldierRed : img.soldierBlue} alt={td ? 'Quân Triệu Đà' : 'Quân An Dương Vương'} className={`${td ? 'win-td' : 'win-adv brightness-110'} relative w-full`} loading="lazy" />
@@ -244,19 +273,28 @@ export default function Rules() {
 
       {/* 04–06: cơ chế đặc biệt */}
       <Scene bg={img.rulesBg} pos="30% 100%" overlay="from-night/85 via-night/75 to-night/85">
-        <div className="grid gap-12 md:grid-cols-3 md:gap-8">
+        <div className="rl-specs grid gap-12 md:grid-cols-3 md:gap-8">
           {rulesSpecial.map((x) => (
-            <article key={x.n} className="flex flex-col">
-              <div className="rl-spec-art mb-5">
+            <article key={x.n} className="rl-spec flex flex-col">
+              <div className="rl-spec-art rv-art mb-5">
                 <div className="moon absolute aspect-square h-32 opacity-[.18]" aria-hidden />
                 <img src={x.image} alt="" className="relative rounded-md drop-shadow-2xl" loading="lazy" />
               </div>
-              <span className="rl-num mb-1 text-3xl" aria-hidden>{x.n}</span>
-              <h3 className="mb-3 font-display text-xl font-bold text-gold md:text-2xl">{x.title}</h3>
+              <span className="rl-num rv-badge mb-1 inline-block self-start text-3xl" aria-hidden>{x.n}</span>
+              <h3 className="rv-title mb-3 font-display text-xl font-bold text-gold md:text-2xl">{x.title}</h3>
               <div className="grid gap-3 text-[.95rem] leading-relaxed text-mist">
-                {x.body.map((t) => <p key={t}>{t}</p>)}
+                {x.body.map((t) => <p key={t} className="rv-text">{t}</p>)}
               </div>
-              {'note' in x && x.note && <p className="rl-item mt-4 text-sm italic leading-relaxed text-gold">{x.note}</p>}
+              {'note' in x && x.note && <p className="rv-text rl-item mt-4 text-sm italic leading-relaxed text-gold">{x.note}</p>}
+              {'link' in x && x.link && (
+                // Dẫn về chỗ đã trình bày lá bài: 04 -> ô Thẻ nhiệm vụ (Thành phần), 06 -> Trọng Thủy (Nhân vật, đúng điểm dừng trong đoạn ghim)
+                <div className="rv-text mt-6">
+                  <a href={x.link.href} className="btn btn-solid !px-5 !py-2.5 !text-sm"
+                    onClick={(e) => { if (x.link.character && goToCharacter(x.link.character)) { e.preventDefault(); e.stopPropagation() } }}>
+                    {x.link.label}
+                  </a>
+                </div>
+              )}
             </article>
           ))}
         </div>

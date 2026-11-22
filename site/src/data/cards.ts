@@ -16,9 +16,14 @@ import guideBack from '../assets/game/guide/back.webp'
 // Bản 4000px cho chế độ phóng to trong hộp (chỉ tải khi mở tờ hướng dẫn); tạo từ PDF gốc ở 4400px rồi nén q72
 import guideFrontHd from '../assets/game/guide/front-hd.webp'
 import map from '../assets/game/map/map.webp'
+// Bản 3200px cho chế độ xem chi tiết bản đồ (chỉ tải khi bấm vào bản đồ); render từ PDF gốc map 1.pdf
+import mapHd from '../assets/game/map/map-hd.webp'
 import tokenDo from '../assets/game/tokens/do.webp'
 import tokenXanh from '../assets/game/tokens/xanh.webp'
 import tokenNo from '../assets/game/tokens/no.webp'
+// Quân nhựa (Token lính): ảnh render team gửi (không màu), tách nền + tô xanh/đỏ bằng scripts/make-pawns.mjs
+import pawnXanh from '../assets/game/tokens/pawn-xanh.webp'
+import pawnDo from '../assets/game/tokens/pawn-do.webp'
 
 export type Card = { id: string; name: string; image: string; text: string }
 export type CardGroup = {
@@ -82,7 +87,8 @@ export const cardGroups: CardGroup[] = [
     side: 'red',
     cover: cardTrieuDa,
     cards: [
-      { id: 'trieu-da', name: 'Triệu Đà', image: cardTrieuDa, text: 'Tấn công và chiếm thành Cổ Loa' },
+      // Bộ game có 2 lá Triệu Đà và 2 lá An Dương Vương (cùng mặt in)
+      ...[1, 2].map((k) => ({ id: `trieu-da-${k}`, name: 'Triệu Đà', image: cardTrieuDa, text: 'Tấn công và chiếm thành Cổ Loa' })),
       ...trongThuy.map((t, i) => ({
         id: `trong-thuy-${i + 1}`,
         name: t.name,
@@ -98,7 +104,7 @@ export const cardGroups: CardGroup[] = [
     side: 'blue',
     cover: cardAdv,
     cards: [
-      { id: 'an-duong-vuong', name: 'An Dương Vương', image: cardAdv, text: 'Bảo vệ Thành Cổ Loa' },
+      ...[1, 2].map((k) => ({ id: `an-duong-vuong-${k}`, name: 'An Dương Vương', image: cardAdv, text: 'Bảo vệ Thành Cổ Loa' })),
       ...soldiers('blue'),
     ],
   },
@@ -124,6 +130,9 @@ export const boxFaces: { top: string; bottom: string; topHd: string; bottomHd: s
 }
 
 export const mapImage: string = map
+export const mapImageHd: string = mapHd
 
-// Để dành, chưa dùng (không đưa token vào hộp).
+// Đĩa tròn = Token chiến thắng (xanh/đỏ), token nỏ
 export const tokens: { do: string; xanh: string; no: string } = { do: tokenDo, xanh: tokenXanh, no: tokenNo }
+/** Quân nhựa = Token lính */
+export const pawns: { do: string; xanh: string } = { do: pawnDo, xanh: pawnXanh }

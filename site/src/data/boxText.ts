@@ -1,15 +1,20 @@
 // Chữ hiển thị của phần mở hộp 3D (BoxIntro). TODO(copy): team duyệt lại câu chữ.
 export const boxText = {
-  title: 'Bên trong hộp Cổ Loa',
+  title: 'Cổ Loa: Kẻ Giữ Cửa',
   hintClosed: 'Kéo để xoay, cuộn chuột để phóng to, bấm để mở',
-  hintOpen: 'Bấm vào từng chồng bài để xem',
+  hintOpen: 'Bấm vào từng ngăn trong hộp để xem thành phần',
+  hintMap: 'Bấm vào tấm bản đồ để xem chi tiết',
   hitLabel: 'Hộp game Cổ Loa. Kéo để xoay, bấm hoặc nhấn Enter để mở hộp',
   close: 'Đóng hộp',
   back: 'Quay lại',
   cardsUnit: 'lá',
   // Nhãn dưới mỗi chồng bài trên map (thay cho số lá)
   stackLabel: { 'trieu-da': 'Phe Triệu Đà', 'an-duong-vuong': 'Phe An Dương Vương', 'mat-chieu': 'Mật chiếu' } as Record<string, string>,
-  tokensName: 'Các loại token',
+  tokensName: 'Token chiến thắng và Token nỏ',
+  pawnsName: 'Token lính',
+  pawnsLabel: 'Token lính',
+  // Hộp bài kiểu tuck box: bấm một lần -> hộp ra giữa, tự mở, lá xòe quạt
+  deckOpen: 'Bấm để mở hộp bài và xem các lá',
   tokensLabel: 'Token',
   tokensHint: 'Số lượng và cách dùng từng loại token',
   pickCard: 'Bấm một lá để xem chức năng',
@@ -17,6 +22,10 @@ export const boxText = {
   guideHint: 'Cuộn chuột để phóng to, kéo để di chuyển, bấm đúp để phóng/thu',
   guideHintTouch: 'Chụm hai ngón hoặc chạm hai lần để phóng to, kéo để di chuyển',
   mapAlt: 'Bản đồ Cổ Loa với các cổng thành 1A đến 5B',
+  mapName: 'Bản đồ',
+  mapLabel: 'Bản đồ',
+  mapOpen: 'Bản đồ Cổ Loa. Bấm để xem chi tiết',
+  lidAlt: 'Nắp hộp Cổ Loa: Kẻ Giữ Cửa, đặt cạnh hộp',
   guideCoverAlt: 'Tờ hướng dẫn đang gấp: bìa Cổ Loa, Kẻ Giữ Cửa',
   guideFrontAlt: 'Tờ hướng dẫn chơi trải phẳng: tổng quan, chuẩn bị, chi tiết cách chơi, cơ chế đặc biệt',
 }
