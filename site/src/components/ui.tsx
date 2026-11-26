@@ -18,7 +18,7 @@ const icons = {
   age: <path d="M12 21a9 9 0 100-18 9 9 0 000 18zM8 15v-5l-1.5 1M11 15h3M14 10v5" />,
 }
 
-/** Dải thông tin 6 người chơi / 45–60 phút / 12+ */
+/** Dải thông tin 4–6 người chơi / 45–60 phút / 12+ */
 export function MetaBar({ className = '' }: { className?: string }) {
   const items = [
     { k: 'players', text: meta.players },

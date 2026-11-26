@@ -47,7 +47,7 @@ export default function Faq() {
           ))}
         </div>
 
-        <div role="tabpanel" id={`${uid}-panel`} aria-labelledby={`${uid}-tab-${active}`} className="frame bg-night/70 px-5 py-2 md:px-8">
+        <div role="tabpanel" id={`${uid}-panel`} aria-labelledby={`${uid}-tab-${active}`} className="panel px-5 py-2 md:px-8">
           {group.items.map((it, j) => {
             const k = `${active}-${j}`
             const isOpen = !!open[k]

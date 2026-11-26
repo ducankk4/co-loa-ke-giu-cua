@@ -1,7 +1,7 @@
 // Một nguồn sự thật cho chữ hiển thị.
 // DRAFT: chỉ các tiêu đề, tagline logo, "Nhắm mắt", câu thắng của Triệu Đà và dòng lá bài Triệu Đà là từ team.
 // Phần còn lại là bản nháp để dựng giao diện, thay bằng copy từ TÓNG_WEB.docx khi có (TODO(copy)).
-export const meta = { players: '6 người chơi', time: '45–60 phút', age: '12+' }
+export const meta = { players: '4–6 người chơi', time: '45–60 phút', age: '12+' }
 
 export const nav = [
   { id: 'gioi-thieu', label: 'Giới thiệu' },
@@ -13,13 +13,12 @@ export const nav = [
 ]
 
 export const hero = {
-  tagline: 'Sáu người, một cổng thành. Ai giữ cửa, ai mở cửa?',
   explore: 'Khám phá trò chơi',
   preorder: 'Đặt trước ngay',
 }
 export const intro = {
   title: 'Chia phe, bàn mưu, giữ lấy cổng thành',
-  body: 'Cổ Loa: Kẻ Giữ Cửa là board game cho 6 người. Bạn đứng về phía An Dương Vương hay Triệu Đà? Cùng đồng đội bàn mưu, đặt quân, và đoán xem trong bàn còn ai đang giấu thân phận.',
+  body: 'Cổ Loa: Kẻ Giữ Cửa là board game cho 4–\u20606 người. Bạn đứng về phía An Dương Vương hay Triệu Đà? Cùng đồng đội bàn mưu, đặt quân, và đoán xem trong bàn còn ai đang giấu thân phận.',
 }
 export const history = {
   title: 'Khi lòng tin trở thành vũ khí',

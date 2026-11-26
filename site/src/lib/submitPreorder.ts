@@ -1,5 +1,7 @@
 export interface PreorderPayload {
   name: string; phone: string; email: string; quantity: number; note: string
+  /** Ô ẩn chống bot: người thật luôn để trống; server bỏ qua nếu có giá trị */
+  website: string
 }
 export const PHONE_RE = /^(0|\+84)\d{9}$/
 

@@ -89,10 +89,10 @@ export const cardGroups: CardGroup[] = [
     name: 'Triệu Đà',
     side: 'red',
     cover: cardTrieuDa,
-    topCount: 8, // 2 lá Triệu Đà + 6 quân đỏ ở hàng trên; 11 Mật chiếu ở hàng dưới
+    topCount: 7, // lá Triệu Đà + 6 quân đỏ ở hàng trên; 11 Mật chiếu ở hàng dưới
     cards: [
-      // Bộ game có 2 lá Triệu Đà và 2 lá An Dương Vương (cùng mặt in)
-      ...[1, 2].map((k) => ({ id: `trieu-da-${k}`, name: 'Triệu Đà', image: cardTrieuDa, text: 'Tấn công và chiếm thành Cổ Loa' })),
+      // Quạt chỉ hiện mỗi mặt lá một lần; số lá thật của từng loại nằm ở data/deckContents.ts
+      { id: 'trieu-da', name: 'Triệu Đà', image: cardTrieuDa, text: 'Tấn công và chiếm thành Cổ Loa' },
       ...soldiers('red'),
       ...secretCards, // Mật chiếu nằm trong hộp phe Triệu Đà
     ],
@@ -102,9 +102,9 @@ export const cardGroups: CardGroup[] = [
     name: 'An Dương Vương',
     side: 'blue',
     cover: cardAdv,
-    topCount: 9, // 2 lá ADV + 7 Trọng Thủy ở hàng trên; 6 quân xanh ở hàng dưới
+    topCount: 8, // lá ADV + 7 Trọng Thủy ở hàng trên; 6 quân xanh ở hàng dưới
     cards: [
-      ...[1, 2].map((k) => ({ id: `an-duong-vuong-${k}`, name: 'An Dương Vương', image: cardAdv, text: 'Bảo vệ Thành Cổ Loa' })),
+      { id: 'an-duong-vuong', name: 'An Dương Vương', image: cardAdv, text: 'Bảo vệ Thành Cổ Loa' },
       // Trọng Thủy là nhân vật cài vào phe An Dương Vương nên 7 lá nằm trong hộp phe xanh
       ...trongThuy.map((t, i) => ({
         id: `trong-thuy-${i + 1}`,

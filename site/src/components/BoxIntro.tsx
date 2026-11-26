@@ -1,13 +1,15 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react'
 import gsap from 'gsap'
 import { Flip } from 'gsap/Flip'
+import { ScrollToPlugin } from 'gsap/ScrollToPlugin'
 import { boxFaces, guidePages, mapImage, mapImageHd, type Card, type CardGroup } from '../data/cards'
 import { boxText } from '../data/boxText'
+import { deckContents, deckText } from '../data/deckContents'
 import { parts, type Part } from '../data/gameInfo'
 import { useReducedMotion } from '../hooks/useReducedMotion'
 import BoxTray, { coverStyle, DeckBody, deckTone, type TrayPick } from './BoxTray'
 
-gsap.registerPlugin(Flip)
+gsap.registerPlugin(Flip, ScrollToPlugin)
 
 /*
  * Hộp game 3D bằng CSS (preserve-3d) + GSAP, không dùng Three.js.
@@ -92,7 +94,7 @@ function CardText({ text }: { text: string }) {
 }
 
 export default function BoxIntro() {
-  const root = useRef<HTMLElement>(null)
+  const root = useRef<HTMLDivElement>(null)
   const el = useRef<Record<string, HTMLElement | null>>({})
   const tl = useRef<gsap.core.Timeline | null>(null)
   const bob = useRef<gsap.core.Tween | null>(null)
@@ -156,7 +158,7 @@ export default function BoxIntro() {
   useEffect(() => { if (reduced) bob.current?.pause(0); else if (!openRef.current) bob.current?.play() }, [reduced])
 
   // Cuộn chuột trên hộp đóng để phóng to/thu nhỏ. Ở mức nhỏ nhất, cuộn xuống vẫn cuộn trang như thường;
-  // chỉ phóng khi section hộp đang nằm gọn trong màn hình (không chặn người đang cuộn ngang qua).
+  // chỉ phóng khi vùng hộp đang nằm gọn trong màn hình (không chặn người đang cuộn ngang qua trang Thành phần).
   const zoom = useRef(1)
   useEffect(() => {
     const hit = el.current.hit
@@ -164,7 +166,8 @@ export default function BoxIntro() {
     const wheel = (e: WheelEvent) => {
       const zin = e.deltaY < 0
       if (!zin && zoom.current <= 1) return
-      if (Math.abs(root.current!.getBoundingClientRect().top) > 80) return
+      const r = hit.getBoundingClientRect()
+      if (r.top < 0 || r.bottom > window.innerHeight) return
       e.preventDefault()
       zoom.current = clamp(zoom.current * Math.exp(-e.deltaY * 0.0015), 1, ZOOM_MAX)
       if (zoom.current > 1.05) setHd(true)
@@ -225,6 +228,13 @@ export default function BoxIntro() {
     if (openRef.current) return
     setEver(true)
     setOpen(true)
+    // Các lớp xem chi tiết phủ kín section: đưa section Thành phần về khít màn hình nếu đang lệch
+    const sec = root.current!.closest('section')
+    const top = sec ? sec.getBoundingClientRect().top : 0
+    if (sec && Math.abs(top) > 40) {
+      if (reducedRef.current) window.scrollTo(0, top + scrollY)
+      else gsap.to(window, { scrollTo: top + scrollY, duration: 0.6, ease: 'power2.inOut', overwrite: true })
+    }
   }
   /**
    * Đóng hộp theo trình tự: (1) đặt lại tấm bản đồ lên khay (bay từ cạnh hộp về, Flip ngược), (2) khay và bản đồ mờ đi,
@@ -393,14 +403,15 @@ export default function BoxIntro() {
   }, [card])
 
   return (
-    <section ref={root} id="hop-game" className="relative isolate flex min-h-[100svh] flex-col items-center overflow-hidden px-5 pb-10 pt-24 text-center">
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_50%_60%,var(--color-silk)_0%,var(--color-night)_70%)]" />
-      <div className="absolute left-1/2 top-[52%] -z-10 aspect-square w-[min(110vw,52rem)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgb(242_193_98/.16),transparent_62%)]" aria-hidden />
+    // Nhúng trong section Thành phần: không tự định vị (không "relative") để các lớp chi tiết (absolute inset-0) phủ kín cả section.
+    // Section đó không được có transform (vd. .scene-in/.scene-out), nếu không các lớp chi tiết bị giữ trong khung nhỏ.
+    <div ref={root} id="hop-game" className="flex w-full flex-1 flex-col items-center">
+      <p className="sr-only" aria-live="polite">{open ? (mapAside ? boxText.hintOpen : boxText.hintMap) : boxText.hintClosed}</p>
 
-      <h2 className="h2 relative z-10 mb-3">{boxText.title}</h2>
-      <p className="relative z-10 text-mist" aria-live="polite">{open ? (mapAside ? boxText.hintOpen : boxText.hintMap) : boxText.hintClosed}</p>
-
-      <div className={`bx-stage relative grid w-full flex-1 place-items-center ${ever ? 'bx-stage-open' : 'min-h-[420px]'}`}>
+      <div className={`bx-stage relative grid w-full flex-1 place-items-center ${ever ? 'bx-stage-open' : 'bx-stage-closed'} ${open ? 'bx-is-open' : ''}`}>
+        {/* Ánh sáng quanh hộp (không thuộc mô hình hộp): quầng vàng phía sau + bóng đổ trên mặt bàn */}
+        <div className="bx-halo" aria-hidden />
+        <div className="bx-ground" aria-hidden />
         {/* Hộp 3D */}
         <div className="bx-scale">
           <div ref={ref('zoom')} className="bx-g">
@@ -458,7 +469,7 @@ export default function BoxIntro() {
         )}
       </div>
 
-      <div className={`relative z-10 mt-6 flex gap-4 transition-opacity duration-500 ${open ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
+      <div className={`relative z-10 flex gap-4 transition-opacity duration-500 ${open ? 'mt-4 opacity-100' : 'pointer-events-none h-0 opacity-0'}`}>
         <button type="button" onClick={closeBox} className="bx-close" tabIndex={open ? 0 : -1} disabled={closing}>
           <svg viewBox="0 0 24 24" aria-hidden><path d="M3 9l9-5 9 5M4 10v9h16v-9M9 14h6" /></svg>
           {boxText.close}
@@ -471,7 +482,7 @@ export default function BoxIntro() {
       {tokensOpen && <TokenViewer kind={tokensOpen} onBack={backFromDetail} />}
       {mapView && <MapViewer onBack={backFromDetail} />}
       {card && stack && <Zoom card={card} group={stack} onBack={backFromCard} />}
-    </section>
+    </div>
   )
 }
 
@@ -497,10 +508,13 @@ function DeckFocus({ group, inert, backRef, onBack, onPick }: {
   const dlg = useRef<HTMLDivElement>(null)
   const area = useRef<HTMLDivElement>(null)
   const deck = useRef<HTMLDivElement>(null)
+  const info = useRef<HTMLElement>(null)
   const tl = useRef<gsap.core.Timeline | null>(null)
   const closing = useRef(false)
+  const content = deckContents[group.id]
 
-  /** Vị trí quạt: tâm xoay = tâm hộp; lá cách tâm R, góc trải ±A, vừa khung (không tràn trên/hai bên) */
+  /** Vị trí quạt: tâm xoay = tâm hộp; lá cách tâm R, góc trải ±A, vừa khung (không tràn trên/hai bên).
+   *  Khung = vùng bên trái (desktop) hoặc phần trên (mobile) của lớp xem chi tiết, không phải cả màn hình. */
   const fanLayout = () => {
     const a = area.current!.getBoundingClientRect()
     const dk = deck.current!
@@ -510,9 +524,13 @@ function DeckFocus({ group, inert, backRef, onBack, onPick }: {
     const py = dk.offsetTop + dk.offsetHeight / 2, px = dk.offsetLeft + dk.offsetWidth / 2
     const n = group.cards.length
     const R = Math.max(dk.offsetHeight / 2 + ch * 0.3, py - ch / 2 - 10)
-    const side = Math.min(px, a.width - px) - cw / 2 - 8
-    const angle = (r: number, k: number) =>
-      Math.min((70 * Math.PI) / 180, ((k - 1) * 6 + 14) * (Math.PI / 180), Math.asin(Math.max(0, Math.min(1, side / r))))
+    const half = Math.min(px, a.width - px) - 8
+    /** Góc trải lớn nhất để lá ngoài cùng (đã xoay) vẫn nằm gọn trong vùng quạt: tính cả nửa bề rộng lá xoay nghiêng */
+    const angle = (r: number, k: number) => {
+      let A = Math.min((70 * Math.PI) / 180, ((k - 1) * 6 + 14) * (Math.PI / 180))
+      while (A > 0 && (r + ch / 2) * Math.sin(A) + (cw / 2) * Math.cos(A) > half) A -= Math.PI / 360
+      return Math.max(0, A)
+    }
     /** Một vòng quạt k lá, bán kính r */
     const arc = (k: number, r: number, z: number) => {
       const A = angle(r, k)
@@ -549,6 +567,9 @@ function DeckFocus({ group, inert, backRef, onBack, onPick }: {
         scale: 1, autoAlpha: 1, duration: 0.75, ease: 'back.out(1.1)', stagger: 0.05,
       }, 0.8)
       .to(deck.current, { autoAlpha: 0, scale: 0.9, duration: 0.45, ease: 'power2.in' }, 0.95)
+    // Quạt xòe xong mới trượt khối mô tả vào: desktop từ phải sang, mobile từ dưới lên (khối nằm dưới quạt)
+    const wide = window.matchMedia('(min-width: 768px)').matches
+    t.fromTo(info.current, { autoAlpha: 0, x: wide ? 48 : 0, y: wide ? 0 : 24 }, { autoAlpha: 1, x: 0, y: 0, duration: 0.4, ease: 'power2.out' })
     tl.current = t
     if (prefersReducedMotionNow()) t.progress(1)
     else t.play()
@@ -575,20 +596,45 @@ function DeckFocus({ group, inert, backRef, onBack, onPick }: {
   })
 
   return (
-    <div ref={dlg} role="dialog" aria-label={group.name} inert={inert} className="bx-detail absolute inset-0 z-30 flex flex-col px-4 pb-6 pt-24 text-left backdrop-blur-sm md:px-8">
+    // Desktop: trái ~58% là hộp bài + quạt, phải ~42% là khối mô tả. Mobile: quạt ở trên, mô tả ở dưới, cuộn dọc trong lớp này.
+    <div ref={dlg} role="dialog" aria-label={group.name} inert={inert}
+      className="bx-detail absolute inset-0 z-30 flex flex-col overflow-y-auto overflow-x-hidden px-4 pb-6 pt-24 text-left backdrop-blur-sm md:overflow-hidden md:px-8">
       <div className="bx-df-head mb-4 flex flex-wrap items-center gap-x-5 gap-y-2">
         <BackButton onClick={back} />
         <h3 className="font-display text-2xl font-bold text-gold md:text-3xl">{group.name}</h3>
-        <span className="text-sm text-mist">{boxText.pickCard}</span>
+        <span className="text-sm text-mist md:hidden">{boxText.pickCard}</span>
       </div>
-      <div ref={area} className="bx-df-area relative min-h-0 flex-1">
-        {/* Lá nằm sau hộp: bay lên từ miệng hộp rồi xòe quạt */}
-        {group.cards.map((c) => (
-          <button key={c.id} type="button" data-card={c.id} onClick={() => onPick(c)} aria-label={c.name} className="bx-card bx-fan-card invisible cursor-pointer">
-            <img src={c.image} alt="" width={600} height={927} draggable={false} className="h-full w-full rounded-md object-cover" />
-          </button>
-        ))}
-        <div ref={deck} className="bx-df-deck" aria-hidden><DeckBody tone={deckTone(group)} /></div>
+      <div className="flex min-h-0 flex-1 flex-col gap-6 md:flex-row md:items-center md:gap-8">
+        <div ref={area} className="bx-df-area relative h-[min(46svh,400px)] w-full shrink-0 md:h-full md:w-[58%]">
+          {/* Lá nằm sau hộp: bay lên từ miệng hộp rồi xòe quạt */}
+          {group.cards.map((c) => (
+            <button key={c.id} type="button" data-card={c.id} onClick={() => onPick(c)} aria-label={c.name} className="bx-card bx-fan-card invisible cursor-pointer">
+              <img src={c.image} alt="" width={600} height={927} draggable={false} className="h-full w-full rounded-md object-cover" />
+            </button>
+          ))}
+          <div ref={deck} className="bx-df-deck" aria-hidden><DeckBody tone={deckTone(group)} /></div>
+        </div>
+        <aside ref={info} aria-label={content.title}
+          className={`bx-df-info panel ${group.side === 'red' ? 'panel-red' : 'panel-blue'} invisible w-full shrink-0 p-5 md:max-h-full md:w-[42%] md:max-w-xl md:shrink md:overflow-y-auto md:p-7`}>
+          <h4 className="font-display text-xl font-bold text-white md:text-2xl">{content.title}</h4>
+          <ul className="mt-3 divide-y divide-white/10">
+            {content.lines.map((l) => (
+              <li key={l.name} className="py-3">
+                <div className="flex items-baseline justify-between gap-4">
+                  <span className="font-semibold text-white">{l.name}</span>
+                  <span className="shrink-0 text-right font-bold text-gold">
+                    {l.qty}{l.qty !== `${l.count} lá` && <span className="ml-1 text-sm font-normal text-mist">({l.count} lá)</span>}
+                  </span>
+                </div>
+                <p className="mt-1 text-sm leading-relaxed text-mist">{l.body}</p>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1 flex items-baseline justify-between gap-4 border-t border-gold/40 pt-3 font-display text-lg font-bold text-white">
+            <span>{deckText.total}</span><span className="text-gold">{content.total} {boxText.cardsUnit}</span>
+          </p>
+          <p className="mt-4 text-xs text-mist/70">{deckText.hint}</p>
+        </aside>
       </div>
     </div>
   )
@@ -613,7 +659,7 @@ function TokenViewer({ kind, onBack }: { kind: TokenKind; onBack: () => void }) 
       </div>
       <div className={`mx-auto grid min-h-0 w-full flex-1 content-start gap-4 overflow-y-auto pb-2 md:content-center md:gap-6 ${set.items.length > 1 ? 'max-w-4xl md:grid-cols-2' : 'max-w-md'}`}>
         {set.items.map((t) => (
-          <div key={t.id} className="bx-tk frame flex items-start gap-4 bg-night/70 p-4 md:flex-col md:items-center md:p-6 md:text-center">
+          <div key={t.id} className="bx-tk panel flex items-start gap-4 p-4 md:flex-col md:items-center md:p-6 md:text-center">
             <div className="flex shrink-0 justify-center">
               {t.images.map((src, i) => (
                 <img key={i} src={src} alt="" draggable={false}
@@ -638,7 +684,7 @@ function Zoom({ card, group, onBack }: { card: Card; group: CardGroup; onBack: (
       <div className="absolute left-4 top-20 z-10 md:left-8 md:top-24"><BackButton onClick={onBack} /></div>
       <img src={card.image} alt={`${card.name}, ${group.name}`} width={600} height={927} draggable={false}
         className="bx-zoom-img h-auto max-h-[40svh] w-auto shrink-0 rounded-lg shadow-[0_30px_60px_rgb(0_0_0/.7)] md:max-h-[74svh]" />
-      <div className="bx-zoom-info frame w-full max-w-md bg-night/90 p-6">
+      <div className={`bx-zoom-info panel ${group.side === 'red' ? 'panel-red' : 'panel-blue'} w-full max-w-md p-6`}>
         <h3 className="mb-3 font-display text-2xl font-bold text-gold">{card.name}</h3>
         <CardText text={card.text} />
       </div>

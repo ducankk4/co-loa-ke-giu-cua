@@ -38,6 +38,28 @@ body { background: var(--color-night); color: var(--color-mist); font-family: va
   .frame-red { border-color: #b3322b; }
   .frame-red::before { border-color: color-mix(in srgb, #b3322b 60%, transparent); }
 
+  /* Khối chữ: nền tối trong mờ, không viền bao, một vạch nhấn mảnh ở mép trên (đổi màu theo phe bằng --accent).
+     .frame chỉ còn dùng cho khung ảnh/thẻ. */
+  .panel {
+    --accent: var(--color-gold);
+    position: relative; border-radius: 8px;
+    background: linear-gradient(145deg, rgb(5 9 24 / .72), rgb(5 9 24 / .42));
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    box-shadow: 0 20px 60px rgb(0 0 0 / .35), inset 0 1px 0 rgb(255 255 255 / .04);
+  }
+  .panel::before {
+    content: ""; position: absolute; left: 1.5rem; top: 0; width: 48px; height: 2px; border-radius: 2px;
+    background: var(--accent); opacity: .9; pointer-events: none;
+  }
+  .panel-red { --accent: #d1453b; background: linear-gradient(145deg, rgb(122 18 25 / .42), rgb(5 9 24 / .5)); }
+  .panel-blue { --accent: #4f8fd6; background: linear-gradient(145deg, rgb(31 79 143 / .38), rgb(5 9 24 / .5)); }
+  /* Khối trích dẫn: vạch dọc bên trái + dấu ngoặc kép lớn mờ thay cho khung */
+  .panel-quote::before { left: 0; top: 1.25rem; bottom: 1.25rem; width: 2px; height: auto; }
+  .panel-quote::after {
+    content: "\201C"; position: absolute; left: .6rem; top: .05em; font-family: var(--font-serif); font-size: 6rem; line-height: 1;
+    color: var(--accent); opacity: .12; pointer-events: none;
+  }
+
   .btn { display: inline-block; padding: 0.85rem 2rem; font-weight: 700; cursor: pointer; transition: background-color .2s, color .2s, translate .25s cubic-bezier(.2, .7, .2, 1), box-shadow .3s, background-position .7s ease; }
   .btn:hover { translate: 0 -3px; }
   .btn:active { translate: 0 1px; transition-duration: .08s; }
@@ -74,6 +96,13 @@ body { background: var(--color-night); color: var(--color-mist); font-family: va
 @media (max-width: 1100px) { .bx-stage { --bx-k: .82; } }
 @media (max-width: 767px) { .bx-stage { --bx-k: .66; } }
 @media (max-width: 400px) { .bx-stage { --bx-k: .6; } }
+/* Hộp nằm trong section Thành phần (chung màn hình với tiêu đề): co thêm khi màn hình thấp */
+@media (max-height: 860px) { .bx-stage { --bx-k: .8; } }
+@media (max-height: 700px) { .bx-stage { --bx-k: .64; } }
+@media (max-width: 767px) and (max-height: 1000px) { .bx-stage { --bx-k: .6; } }
+.bx-stage-closed { min-height: calc(var(--bx-k) * 330px); }
+/* Logo Hero: ảnh vuông có nhiều khoảng trống quanh chữ, nên bù lề âm (cùng công thức với bề rộng) */
+.hero-logo { width: min(88vw, 600px, 44svh); margin-block: calc(min(88vw, 600px, 44svh) * -.14); }
 .bx-scale { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform: scale(var(--bx-k)); perspective: 1700px; }
 .bx-g { position: absolute; left: 0; top: 0; width: 0; height: 0; transform-style: preserve-3d; }
 .bx-f { position: absolute; left: 50%; top: 50%; backface-visibility: hidden; box-shadow: inset 0 0 0 1px rgb(0 0 0 / .35); }
@@ -82,9 +111,32 @@ body { background: var(--color-night); color: var(--color-mist); font-family: va
 .bx-hit:active { cursor: grabbing; }
 .bx-hit:focus-visible { outline: 2px solid var(--color-gold); outline-offset: 4px; }
 
+/* Hộp nổi trên nền (không sửa mô hình hộp): quầng vàng ấm hình elip phía sau, bóng đổ mềm dưới đáy,
+   viền sáng vàng rất nhẹ. Mở hộp thì quầng sáng lan rộng theo khay, bóng đổ tắt. */
+.bx-halo {
+  position: absolute; left: 50%; top: 50%; width: calc(var(--bx-k) * 900px); height: calc(var(--bx-k) * 620px); max-width: 140vw;
+  translate: -50% -50%; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(ellipse closest-side, rgb(242 193 98 / .42), rgb(242 193 98 / .16) 50%, transparent);
+  transition: width .9s cubic-bezier(.2, .7, .2, 1), height .9s cubic-bezier(.2, .7, .2, 1), opacity .9s;
+  animation: bx-breathe 6s ease-in-out infinite;
+}
+.bx-is-open .bx-halo { width: calc(var(--m) * 1.25); height: calc(var(--m) * .8); opacity: .75; }
+@keyframes bx-breathe { 50% { scale: 1.06; opacity: .85; } }
+.bx-ground {
+  position: absolute; left: 50%; top: calc(50% + var(--bx-k) * 150px); width: calc(var(--bx-k) * 520px); height: calc(var(--bx-k) * 70px);
+  translate: -50% 0; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(ellipse closest-side, rgb(0 0 0 / .7), rgb(0 0 0 / .35) 55%, transparent);
+  filter: blur(6px); transition: opacity .5s;
+}
+.bx-is-open .bx-ground { opacity: 0; }
+.bx-stage:not(.bx-is-open) .bx-scale { filter: drop-shadow(0 0 1.5px rgb(242 193 98 / .55)) drop-shadow(0 0 22px rgb(242 193 98 / .22)); }
+/* Nền section Thành phần: tranh tối + mờ nhẹ, vignette bốn góc dồn mắt vào giữa */
+.bx-sec-bg { filter: brightness(.55) blur(2.5px); scale: 1.04; }
+.bx-sec-vignette { background: radial-gradient(ellipse 75% 70% at 50% 55%, rgb(5 9 24 / .15), rgb(5 9 24 / .55) 65%, rgb(5 9 24 / .92)); }
+
 /* Mặt bàn sau khi mở: lòng hộp (khay) bên trái, cột bên phải có nắp hộp và (sau khi xem) tấm bản đồ */
 /* --m = bề rộng cả mặt bàn; hộp chiếm .66m, cột cạnh .3m. Mobile: hộp rộng hết, nắp + bản đồ xếp hàng ngang bên dưới */
-.bx-stage { --m: min(94vw, calc((100svh - 360px) * 1.85), 1180px); }
+.bx-stage { --m: min(94vw, calc((100svh - 330px) * 1.85), 1180px); }
 .bx-stage-open { min-height: max(300px, calc(var(--m) * .54 + 40px)); }
 .bx-desk { display: flex; align-items: center; gap: calc(var(--m) * .04); }
 .bx-plane {
@@ -149,7 +201,7 @@ body { background: var(--color-night); color: var(--color-mist); font-family: va
 .bx-tray .bx-stack.bx-away { visibility: hidden !important; }
 /* DeckFocus: khung là container để hộp và lá co theo; hộp ở giữa dưới, lá xuất phát từ tâm hộp rồi xòe quạt phía trên */
 .bx-df-area { container-type: size; --dh: min(34cqh, 260px); --cw: min(13cqw, 26cqh, 150px); --by: 6cqh; }
-@media (max-width: 767px) { .bx-df-area { --dh: min(30cqh, 200px); --cw: min(20cqw, 24cqh, 110px); --by: 16cqh; } }
+@media (max-width: 767px) { .bx-df-area { --dh: min(32cqh, 180px); --cw: min(22cqw, 27cqh, 110px); --by: 0px; } }
 .bx-df-deck { position: absolute; left: 50%; bottom: var(--by); height: var(--dh); aspect-ratio: .64; margin-left: calc(var(--dh) * -.32); z-index: 3; filter: drop-shadow(0 20px 30px rgb(0 0 0 / .7)); }
 .bx-fan-card { position: absolute; left: 50%; width: var(--cw); aspect-ratio: 600 / 927; margin-left: calc(var(--cw) / -2); bottom: calc(var(--by) + var(--dh) / 2 - var(--cw) * 1.545 / 2); }
 .bx-fan-card:is(:hover, :focus-visible) { z-index: 5 !important; }
@@ -206,25 +258,13 @@ body { background: var(--color-night); color: var(--color-mist); font-family: va
 @media (min-width: 768px) { .bx-grid { --g: 14px; --c: var(--cd); --r: var(--rd); } }
 .bx-card:focus-visible { outline: 2px solid var(--color-gold); outline-offset: 3px; border-radius: 8px; }
 
-/* ---- Nhân vật (quạt Trọng Thủy) & Thành phần bộ game ---- */
+/* ---- Nhân vật (quạt Trọng Thủy) ---- */
 .cv2-fan { width: 9.5rem; height: min(18svh, 10rem); margin-bottom: .75rem; }
 .cv2-fan-card { position: absolute; bottom: 0; left: 50%; width: 5rem; margin-left: -2.5rem; transform-origin: 50% 120%; border-radius: .35rem; box-shadow: 0 8px 18px rgb(0 0 0 / .55); }
 @media (min-width: 768px) {
   .cv2-fan { width: 17rem; height: min(36svh, 18rem); }
   .cv2-fan-card { width: 8.5rem; margin-left: -4.25rem; }
 }
-.pt-art { position: relative; display: grid; place-items: center; height: 11rem; width: 100%; overflow: visible; }
-.pt-img { display: block; border-radius: .4rem; box-shadow: 0 12px 26px rgb(0 0 0 / .55); }
-.pt-card .pt-img { height: 10.5rem; width: auto; }
-.pt-token .pt-img { height: 7rem; width: auto; border-radius: 50%; box-shadow: none; }
-.pt-pawn .pt-img { height: 8rem; width: auto; box-shadow: none; filter: drop-shadow(0 10px 12px rgb(0 0 0 / .55)); }
-.pt-square .pt-img { height: 10rem; width: auto; }
-.pt-wide .pt-img { width: 100%; max-width: 15rem; height: auto; }
-.pt-stack { grid-area: 1 / 1; }
-.pt-empty { display: grid; place-items: center; opacity: .55; }
-.pt-card .pt-empty { height: 10.5rem; aspect-ratio: 5 / 7; }
-.pt-token .pt-empty { height: 7rem; aspect-ratio: 1; border-radius: 50%; }
-.pt-empty span { font-family: var(--font-display); font-weight: 700; font-size: 2.5rem; color: var(--color-gold); }
 
 /* ===== Cơ chế chơi (Rules.tsx) ===== */
 .rl-num { font-family: var(--font-display); font-weight: 700; line-height: 1; color: var(--color-gold); opacity: .85; }
@@ -291,9 +331,6 @@ body { background: var(--color-night); color: var(--color-mist); font-family: va
 .cv2-tab[aria-selected='true'] { box-shadow: 0 0 22px rgb(242 193 98 / .4); }
 .cv2-tab:active { translate: 0 1px; }
 
-/* Ô Thành phần */
-.pt-cell { transition: translate .3s cubic-bezier(.2, .7, .2, 1), box-shadow .3s, background-color .3s; }
-.pt-cell:hover { translate: 0 -6px; background-color: rgb(5 9 24 / .85); box-shadow: 0 24px 40px -18px rgb(0 0 0 / .8), 0 0 30px rgb(242 193 98 / .2); }
 
 /* Cơ chế chơi: vạch nối các bước (GSAP kéo dài theo cuộn), các bước và cơ chế đặc biệt phản hồi khi rê chuột */
 .rl-timeline::before { opacity: .25; }

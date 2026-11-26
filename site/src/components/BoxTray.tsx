@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react'
 import { cardGroups, guidePages, pawns, tokens, type CardGroup } from '../data/cards'
 import { boxText } from '../data/boxText'
+import { deckContents } from '../data/deckContents'
 import { img } from '../data/assets'
 
 /*
@@ -76,7 +77,7 @@ export const deckTone = (g: CardGroup): 'red' | 'blue' => (g.side === 'red' ? 'r
 function Deck({ g, cls, away, onPick }: { g: CardGroup; cls: string; away: boolean; onPick: (g: CardGroup) => void }) {
   return (
     <button type="button" data-stack={g.id} className={`bx-stack ${cls} invisible ${away ? 'bx-away' : ''}`} onClick={() => onPick(g)}
-      aria-label={`${g.name}, ${g.cards.length} ${boxText.cardsUnit}. ${boxText.deckOpen}`}>
+      aria-label={`${deckContents[g.id].title}, ${deckContents[g.id].total} ${boxText.cardsUnit}. ${boxText.deckOpen}`}>
       <span className="bx-glow" />
       <DeckBody tone={deckTone(g)} />
     </button>

@@ -17,6 +17,7 @@ import cardTrieuDaImg from '../assets/game/characters/trieu-da.webp'
 import cardTrongThuyImg from '../assets/game/characters/trong-thuy-3.webp'
 import cardBlueImg from '../assets/game/soldiers-blue/1.webp'
 import cardRedImg from '../assets/game/soldiers-red/4.webp'
+import cardRed8Img from '../assets/game/soldiers-red/8.webp'
 import secretImg from '../assets/game/secret/1a.webp'
 import guideFront from '../assets/game/guide/front.webp'
 import mapFull from '../assets/game/map/map.webp'
@@ -33,7 +34,7 @@ export const img = {
   // Lá bài thật (src/assets/game/)
   cardAdv: cardAdvImg, cardTrieuDa: cardTrieuDaImg, cardTrieuDaFace: cardTrieuDaImg,
   cardTrongThuy: cardTrongThuyImg, // lá "xem trộm"
-  cardBlue: cardBlueImg, cardRed: cardRedImg, secret: secretImg,
+  cardBlue: cardBlueImg, cardRed: cardRedImg, cardRed8: cardRed8Img, secret: secretImg,
   guidePage: guideFront, mapImage: mapFull,
   cardBack: theMatSau, soldierBlue: linhXanh, soldierRed: linhDo,
 }

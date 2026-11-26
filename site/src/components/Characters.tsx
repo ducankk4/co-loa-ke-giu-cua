@@ -8,6 +8,7 @@ import { useReducedMotion } from '../hooks/useReducedMotion'
 import { GoldButton } from './ui'
 import Split from './Split'
 import { setCharacterNav } from '../lib/characterNav'
+import { PREORDER_URL } from '../lib/links'
 
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin)
 
@@ -28,7 +29,7 @@ function Info({ c, k }: { c: (typeof characters)[number]; k: number }) {
       <h2 className="h2 mb-5"><Split text={c.name} /></h2>
       <p className="cv-rest body mb-5 md:mb-8 max-md:text-[0.95rem] max-md:leading-relaxed">{c.body}</p>
       {'note' in c && <p className="cv-rest mb-5 text-sm italic text-gold md:mb-8">{c.note}</p>}
-      <div className="cv-rest max-md:hidden"><GoldButton href="#dat-truoc">Đặt trước sản phẩm</GoldButton></div>
+      <div className="cv-rest max-md:hidden"><GoldButton href={PREORDER_URL}>Đặt trước sản phẩm</GoldButton></div>
     </div>
   )
 }

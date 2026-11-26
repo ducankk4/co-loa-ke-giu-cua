@@ -101,8 +101,7 @@ export const rulesWin = {
 }
 
 export const rulesSpecial = [
-  // link: nút dẫn về chỗ đã trình bày lá bài. TODO(copy): nhãn nút do agent viết
-  { n: '04', title: 'Cơ chế đặc biệt: Trọng Thủy', image: img.secret, link: { href: '#tp-nhiem-vu', label: 'Xem 11 thẻ nhiệm vụ' }, body: [
+  { n: '04', title: 'Cơ chế đặc biệt: Trọng Thủy', image: img.secret, body: [
     'Trọng Thủy phải bí mật thực hiện nhiệm vụ do phe Triệu Đà giao từ đầu ván.',
     'Nếu hoàn thành nhiệm vụ, phe Triệu Đà không chịu tổn thất. Nếu thất bại, một nửa tổng số token lính hiện có trên bản đồ của phe Triệu Đà sẽ bị loại bỏ.',
   ] },
@@ -111,7 +110,7 @@ export const rulesSpecial = [
     'Tại ô sử dụng Nỏ thần, phe An Dương Vương được giữ lại một nửa số quân lính.',
     'Nỏ thần có thể được sử dụng ở bất kỳ vòng nào nhưng chỉ được kích hoạt duy nhất một lần trong toàn bộ ván chơi. Nếu phe An Dương Vương đoán sai danh tính Trọng Thủy, quyền sử dụng Nỏ thần sẽ bị mất.',
   ] },
-  { n: '06', title: 'Cơ chế chức năng: Quyền năng Trọng Thủy', image: img.cardTrongThuy, link: { href: '#nhan-vat', character: 'tt', label: 'Xem 7 thẻ Trọng Thủy' }, body: [
+  { n: '06', title: 'Cơ chế chức năng: Quyền năng Trọng Thủy', image: img.cardTrongThuy, body: [
     'Khi muốn sử dụng quyền năng Trọng Thủy để gia tăng sức mạnh tại một ô, phe Triệu Đà yêu cầu phe An Dương Vương úp toàn bộ thẻ nhân vật đang sở hữu.',
     'Phe Triệu Đà lấy cả 3 thẻ nhân vật, đọc nội dung trên thẻ Trọng Thủy để xác định quyền năng, sau đó úp xuống và trả lại cho phe An Dương Vương.',
   ], note: 'Lưu ý: Quyền năng Trọng Thủy phải được sử dụng tại một ô cụ thể và trước khi tiến hành so quân.' },

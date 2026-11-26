@@ -5,7 +5,6 @@ import { img } from '../data/assets'
 import { rulesIntro, whoIsWho, eyesClosed } from '../data/content'
 import { rulesSetup, rulesRound, rulesWin, rulesSpecial, soldierCards } from '../data/gameInfo'
 import { pawns } from '../data/cards'
-import { goToCharacter } from '../lib/characterNav'
 import { prefersReducedMotion, useReducedMotion } from '../hooks/useReducedMotion'
 import { Backdrop, GoldButton, MetaBar, Scene } from './ui'
 
@@ -119,7 +118,7 @@ function EyesClosed() {
         <div>
           <h2 className="h2 mb-3 md:mb-5">{eyesClosed.title}</h2>
           <p className="body rl-item mb-4 !text-base md:mb-8 md:!text-lg">{rulesSetup.items[2]}</p>
-          <figure className="ec-order frame frame-red bg-red-td/25 p-4 md:p-7">
+          <figure className="ec-order panel panel-red panel-quote p-4 pl-6 md:p-7 md:pl-9">
             <blockquote className="font-serif text-base italic leading-relaxed text-white md:text-xl">“{eyesClosed.order}”</blockquote>
             <figcaption className="mt-3 text-sm text-red-200">{eyesClosed.source}</figcaption>
           </figure>
@@ -182,39 +181,41 @@ export default function Rules() {
   useLayoutEffect(() => {
     if (reduced) return
     const ctx = gsap.context(() => {
-      // 02 và 04–06: từng mục hiện dần THEO CUỘN (scrub), cuộn thêm một đoạn mới ra mục tiếp theo; cuộn ngược thì lùi lại.
+      // 02 và 04–06: các mục TỰ CHẠY MỘT LẦN khi section vào màn hình (không gắn theo cuộn), xong trong ~2s,
+      // để mọi nội dung hiện đủ ngay trong trang, không phải cuộn sang trang sau.
       // Mỗi mục: số/vòng tròn bật ra -> hình bay vào -> tiêu đề -> chữ. Không ghim.
       const enter = (tl: gsap.core.Timeline, el: Element, at: number) => {
         const q = gsap.utils.selector(el)
         tl.from(q('.rv-badge'), { scale: 0, rotation: -90, autoAlpha: 0, duration: 0.3, ease: 'back.out(2.2)' }, at)
-          .from(q('.rv-art'), { y: 70, rotation: -10, scale: 0.7, autoAlpha: 0, duration: 0.45, ease: 'back.out(1.4)' }, at + 0.12)
-          .from(q('.rv-title'), { y: 26, autoAlpha: 0, duration: 0.3 }, at + 0.3)
-          .from(q('.rv-text'), { y: 20, autoAlpha: 0, duration: 0.3, stagger: 0.08 }, at + 0.38)
+          .from(q('.rv-art'), { y: 50, rotation: -8, scale: 0.75, autoAlpha: 0, duration: 0.45, ease: 'back.out(1.4)' }, at + 0.08)
+          .from(q('.rv-title'), { y: 20, autoAlpha: 0, duration: 0.3 }, at + 0.2)
+          .from(q('.rv-text'), { y: 16, autoAlpha: 0, duration: 0.3, stagger: 0.06 }, at + 0.26)
       }
+      const once = (trigger: string | Element, start = 'top 75%') => ({ trigger, start, once: true })
       const mm = gsap.matchMedia()
       mm.add('(min-width: 768px)', () => {
-        // Desktop: các mục nằm cùng hàng, một timeline cho cả hàng; vạch nối chạy tới số tiếp theo
+        // Desktop: các mục nằm cùng hàng, một timeline cho cả hàng; vạch nối chạy tới số tiếp theo. Mỗi mục cách nhau 0,35s.
         const steps = gsap.utils.toArray<HTMLElement>('.rl-step')
-        const t2 = gsap.timeline({ defaults: { ease: 'power2.out' }, scrollTrigger: { trigger: '.rl-timeline', start: 'top 88%', end: 'bottom 45%', scrub: 0.8 } })
-        t2.fromTo('.rl-line', { scaleX: 0 }, { scaleX: 1, duration: steps.length, ease: 'none' }, 0)
-        steps.forEach((el, i) => enter(t2, el, i))
+        const t2 = gsap.timeline({ defaults: { ease: 'power2.out' }, scrollTrigger: once('.rl-timeline') })
+        t2.fromTo('.rl-line', { scaleX: 0 }, { scaleX: 1, duration: steps.length * 0.35, ease: 'none' }, 0)
+        steps.forEach((el, i) => enter(t2, el, i * 0.35))
         const specs = gsap.utils.toArray<HTMLElement>('.rl-spec')
-        const t4 = gsap.timeline({ defaults: { ease: 'power2.out' }, scrollTrigger: { trigger: '.rl-specs', start: 'top 88%', end: 'center 45%', scrub: 0.8 } })
-        specs.forEach((el, i) => enter(t4, el, i))
+        const t4 = gsap.timeline({ defaults: { ease: 'power2.out' }, scrollTrigger: once('.rl-specs') })
+        specs.forEach((el, i) => enter(t4, el, i * 0.35))
       })
       mm.add('(max-width: 767px)', () => {
-        // Mobile: các mục xếp dọc, mỗi mục tự hiện khi cuộn tới nó
+        // Mobile: các mục xếp dọc, mỗi mục tự chạy hết khi vừa lọt vào màn hình
         gsap.utils.toArray<HTMLElement>('.rl-step, .rl-spec').forEach((el) => {
-          enter(gsap.timeline({ defaults: { ease: 'power2.out' }, scrollTrigger: { trigger: el, start: 'top 90%', end: 'top 50%', scrub: 0.8 } }), el, 0)
+          enter(gsap.timeline({ defaults: { ease: 'power2.out' }, scrollTrigger: once(el, 'top 85%') }), el, 0)
         })
-        gsap.fromTo('.rl-line', { scaleY: 0 }, { scaleY: 1, ease: 'none', scrollTrigger: { trigger: '.rl-timeline', start: 'top 80%', end: 'bottom 60%', scrub: 0.8 } })
+        gsap.fromTo('.rl-line', { scaleY: 0 }, { scaleY: 1, ease: 'none', duration: 1.2, scrollTrigger: once('.rl-timeline') })
       })
-      // 03: dòng An Dương Vương cùng lính xanh từ trái, rồi dòng Triệu Đà cùng lính đỏ từ phải
-      gsap.timeline({ scrollTrigger: { trigger: '.rl-win', start: 'top 60%' }, defaults: { ease: 'power3.out', duration: 0.8 } })
+      // 03: dòng An Dương Vương cùng lính xanh từ trái, rồi dòng Triệu Đà cùng lính đỏ từ phải (tổng ~1,5s)
+      gsap.timeline({ scrollTrigger: once('.rl-win'), defaults: { ease: 'power3.out', duration: 0.6 } })
         .from('.win-adv', { xPercent: -60, opacity: 0 })
-        .from('.win-row-adv', { x: -30, opacity: 0 }, '<0.15')
-        .from('.win-td', { xPercent: 60, opacity: 0 }, '+=0.25')
-        .from('.win-row-td', { x: 30, opacity: 0 }, '<0.15')
+        .from('.win-row-adv', { x: -30, opacity: 0 }, '<0.1')
+        .from('.win-td', { xPercent: 60, opacity: 0 }, '-=0.2')
+        .from('.win-row-td', { x: 30, opacity: 0 }, '<0.1')
     })
     return () => ctx.revert()
   }, [reduced])
@@ -256,7 +257,7 @@ export default function Rules() {
           {rulesWin.sides.map((l) => {
             const td = l.side === 'td'
             return (
-              <div key={l.side} className={`win-row-${l.side} rl-winrow frame ${td ? 'frame-red bg-red-td/30' : 'frame-blue bg-blue-adv/25'} flex items-center gap-5 p-6 md:p-8`}>
+              <div key={l.side} className={`win-row-${l.side} rl-winrow panel ${td ? 'panel-red' : 'panel-blue'} flex items-center gap-5 p-6 md:p-8`}>
                 <div className="relative w-24 shrink-0 md:w-32">
                   <div className="moon absolute inset-2" aria-hidden />
                   <img src={td ? img.soldierRed : img.soldierBlue} alt={td ? 'Quân Triệu Đà' : 'Quân An Dương Vương'} className={`${td ? 'win-td' : 'win-adv brightness-110'} relative w-full`} loading="lazy" />
@@ -286,15 +287,6 @@ export default function Rules() {
                 {x.body.map((t) => <p key={t} className="rv-text">{t}</p>)}
               </div>
               {'note' in x && x.note && <p className="rv-text rl-item mt-4 text-sm italic leading-relaxed text-gold">{x.note}</p>}
-              {'link' in x && x.link && (
-                // Dẫn về chỗ đã trình bày lá bài: 04 -> ô Thẻ nhiệm vụ (Thành phần), 06 -> Trọng Thủy (Nhân vật, đúng điểm dừng trong đoạn ghim)
-                <div className="rv-text mt-6">
-                  <a href={x.link.href} className="btn btn-solid !px-5 !py-2.5 !text-sm"
-                    onClick={(e) => { if (x.link.character && goToCharacter(x.link.character)) { e.preventDefault(); e.stopPropagation() } }}>
-                    {x.link.label}
-                  </a>
-                </div>
-              )}
             </article>
           ))}
         </div>

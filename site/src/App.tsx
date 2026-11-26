@@ -3,11 +3,10 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Header from './components/Header'
 import Rules from './components/Rules'
-import Preorder from './components/Preorder'
 import Characters from './components/Characters'
-import BoxIntro from './components/BoxIntro'
 import Faq from './components/Faq'
-import { Hero, Intro, History, Components, FinalCta, Footer } from './components/Sections'
+import { Hero, Intro, History, Components, FinalCta } from './components/Sections'
+import Footer from './components/Footer'
 import { useReducedMotion } from './hooks/useReducedMotion'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -34,7 +33,8 @@ function useSceneTransitions() {
       gsap.utils.toArray<HTMLElement>('.scene-in').forEach((el) => {
         gsap.fromTo(el, { y: 90, autoAlpha: 0 }, {
           y: 0, autoAlpha: 1, ease: 'power1.out',
-          scrollTrigger: { trigger: el, start: 'top 95%', end: 'top 55%', scrub: 0.6 },
+          // Hiện đủ sớm (khi đỉnh nội dung tới 75% màn hình) để không phải cuộn qua trang sau mới thấy hết
+          scrollTrigger: { trigger: el, start: 'top 95%', end: 'top 75%', scrub: 0.6 },
         })
       })
       gsap.utils.toArray<HTMLElement>('.scene-out').forEach((el) => {
@@ -54,7 +54,6 @@ export default function App() {
     <>
       <Header />
       <main>
-        <BoxIntro />
         <Hero />
         <Intro />
         <History />
@@ -62,7 +61,7 @@ export default function App() {
         <Components />
         <Rules />
         <Faq />
-        <Preorder />
+        {/* Form đặt trước nằm ở trang riêng dat-truoc.html; FinalCta là khối kêu gọi ngắn dẫn sang đó */}
         <FinalCta />
       </main>
       <Footer />
