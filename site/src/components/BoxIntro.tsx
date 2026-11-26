@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type PointerEvent, type ReactNode } from 'react'
 import gsap from 'gsap'
 import { Flip } from 'gsap/Flip'
 import { ScrollToPlugin } from 'gsap/ScrollToPlugin'
@@ -37,6 +37,11 @@ const part = (id: string) => parts.find((p) => p.id === id)!
 const TOKEN_SETS: Record<TokenKind, { title: string; items: Part[] }> = {
   tokens: { title: boxText.tokensName, items: [part('token-thang'), part('token-no')] },
   pawns: { title: boxText.pawnsName, items: [part('token-linh')] },
+}
+
+/** Bấm ra ngoài vùng nội dung (nền trống) của trang chi tiết thì quay lại, như nút Quay lại / Esc */
+const backOnOutside = (back: () => void) => (e: MouseEvent<HTMLElement>) => {
+  if (!(e.target as HTMLElement).closest('button, a, aside, img, h3, h4, .panel, .bx-df-deck, [role="img"]')) back()
 }
 
 /** Nút quay lại của các trang chi tiết: tách riêng khỏi nội dung, có mũi tên SVG */
@@ -597,7 +602,7 @@ function DeckFocus({ group, inert, backRef, onBack, onPick }: {
 
   return (
     // Desktop: trái ~58% là hộp bài + quạt, phải ~42% là khối mô tả. Mobile: quạt ở trên, mô tả ở dưới, cuộn dọc trong lớp này.
-    <div ref={dlg} role="dialog" aria-label={group.name} inert={inert}
+    <div ref={dlg} role="dialog" aria-label={group.name} inert={inert} onClick={backOnOutside(back)}
       className="bx-detail absolute inset-0 z-30 flex flex-col overflow-y-auto overflow-x-hidden px-4 pb-6 pt-24 text-left backdrop-blur-sm md:overflow-hidden md:px-8">
       <div className="bx-df-head mb-4 flex flex-wrap items-center gap-x-5 gap-y-2">
         <BackButton onClick={back} />
@@ -651,7 +656,7 @@ function gridSize(n: number) {
 function TokenViewer({ kind, onBack }: { kind: TokenKind; onBack: () => void }) {
   const set = TOKEN_SETS[kind]
   return (
-    <div role="dialog" aria-label={set.title} className="bx-detail absolute inset-0 z-30 flex flex-col bg-night/90 px-4 pb-6 pt-24 text-left backdrop-blur-sm md:px-8">
+    <div role="dialog" aria-label={set.title} onClick={backOnOutside(onBack)} className="bx-detail absolute inset-0 z-30 flex flex-col bg-night/90 px-4 pb-6 pt-24 text-left backdrop-blur-sm md:px-8">
       <div className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-2">
         <BackButton onClick={onBack} />
         <h3 className="font-display text-2xl font-bold text-gold md:text-3xl">{set.title}</h3>
@@ -680,7 +685,7 @@ function TokenViewer({ kind, onBack }: { kind: TokenKind; onBack: () => void }) 
 
 function Zoom({ card, group, onBack }: { card: Card; group: CardGroup; onBack: () => void }) {
   return (
-    <div role="dialog" aria-label={card.name} className="bx-zoom absolute inset-0 z-40 flex flex-col items-center gap-5 overflow-y-auto bg-night/95 px-5 pb-8 pt-36 text-left md:flex-row md:justify-center md:gap-14 md:overflow-hidden md:pt-24">
+    <div role="dialog" aria-label={card.name} onClick={backOnOutside(onBack)} className="bx-zoom absolute inset-0 z-40 flex flex-col items-center gap-5 overflow-y-auto bg-night/95 px-5 pb-8 pt-36 text-left md:flex-row md:justify-center md:gap-14 md:overflow-hidden md:pt-24">
       <div className="absolute left-4 top-20 z-10 md:left-8 md:top-24"><BackButton onClick={onBack} /></div>
       <img src={card.image} alt={`${card.name}, ${group.name}`} width={600} height={927} draggable={false}
         className="bx-zoom-img h-auto max-h-[40svh] w-auto shrink-0 rounded-lg shadow-[0_30px_60px_rgb(0_0_0/.7)] md:max-h-[74svh]" />
@@ -697,7 +702,7 @@ function Zoom({ card, group, onBack }: { card: Card; group: CardGroup; onBack: (
  * Phóng to: cuộn chuột (quanh vị trí con trỏ), bấm đúp, chụm hai ngón; kéo để di chuyển khi đã phóng to.
  */
 /** onTap(nx): bấm nhẹ (không kéo, không phóng to, không phải bấm đúp) trên tờ; nx = vị trí ngang 0..1 trên tờ */
-function ZoomPane({ max, label, sheetClass, onTap, children }: { max: number; label: string; sheetClass: string; onTap?: (nx: number) => void; children: ReactNode }) {
+function ZoomPane({ max, label, sheetClass, onTap, onOutside, children }: { max: number; label: string; sheetClass: string; onTap?: (nx: number) => void; onOutside?: () => void; children: ReactNode }) {
   const tap = useRef<{ x: number; y: number; ok: boolean; t: number }>({ x: 0, y: 0, ok: false, t: 0 })
   const view = useRef<HTMLDivElement>(null) // khung nhìn, không biến đổi
   const sheet = useRef<HTMLDivElement>(null) // tờ giấy, GSAP scale + x/y (gốc 0 0)
@@ -779,6 +784,14 @@ function ZoomPane({ max, label, sheetClass, onTap, children }: { max: number; la
       clearTimeout(t.t)
       if (nx >= 0 && nx <= 1) t.t = window.setTimeout(() => onTap(nx), 230)
     }
+    // Bấm nhẹ ra ngoài tờ giấy (không kéo, chưa phóng to): quay lại
+    if (e.type === 'pointerup' && t.ok && onOutside && z.current.s <= 1.05) {
+      const r = sheet.current!.getBoundingClientRect()
+      if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) {
+        clearTimeout(t.t)
+        t.t = window.setTimeout(onOutside, 230)
+      }
+    }
     t.ok = false
   }
   const onDouble = (e: { clientX: number; clientY: number }) => {
@@ -801,7 +814,7 @@ function ZoomPane({ max, label, sheetClass, onTap, children }: { max: number; la
 function ZoomDialog({ title, onBack, children }: { title: string; onBack: () => void; children: ReactNode }) {
   const touch = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
   return (
-    <div role="dialog" aria-label={title} className="bx-detail absolute inset-0 z-30 flex flex-col bg-night/90 px-4 pb-6 pt-24 text-left backdrop-blur-sm md:px-8">
+    <div role="dialog" aria-label={title} onClick={(e) => { if (e.target === e.currentTarget) onBack() }} className="bx-detail absolute inset-0 z-30 flex flex-col bg-night/90 px-4 pb-6 pt-24 text-left backdrop-blur-sm md:px-8">
       <div className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-2">
         <BackButton onClick={onBack} />
         <h3 className="font-display text-2xl font-bold text-gold md:text-3xl">{title}</h3>
@@ -865,7 +878,7 @@ function GuideViewer({ onBack }: { onBack: () => void }) {
   return (
     <ZoomDialog title={boxText.guideName} onBack={onBack}>
       {/* Bấm nửa phải = lật tới, nửa trái = lật lui (chỉ khi chưa phóng to) */}
-      <ZoomPane max={SHEET_MAX} label={boxText.guideFrontAlt} onTap={(nx) => go(cur.current + (nx >= 0.5 ? 1 : -1))}
+      <ZoomPane max={SHEET_MAX} label={boxText.guideFrontAlt} onOutside={onBack} onTap={(nx) => go(cur.current + (nx >= 0.5 ? 1 : -1))}
         sheetClass="aspect-[800/599] w-[min(100%,1200px,calc((100svh-15rem)*1.336))]">
         <div className="bx-book-shift absolute inset-0" style={{ perspective: '2400px' }}>
           {LEAVES.map((l, k) => (
@@ -899,7 +912,7 @@ function MapViewer({ onBack }: { onBack: () => void }) {
   }, [])
   return (
     <ZoomDialog title={boxText.mapName} onBack={onBack}>
-      <ZoomPane max={SHEET_MAX} label={boxText.mapAlt} sheetClass="aspect-[1600/1602] w-[min(100%,calc(100svh-12rem))]">
+      <ZoomPane max={SHEET_MAX} label={boxText.mapAlt} onOutside={onBack} sheetClass="aspect-[1600/1602] w-[min(100%,calc(100svh-12rem))]">
         {/* Ảnh nhỏ (đã tải) làm nền trong lúc chờ ảnh nét */}
         <img src={mapImageHd} alt="" width={3200} height={3203} draggable={false}
           className="bx-map-big h-full w-full rounded-md bg-cover shadow-[0_20px_40px_rgb(0_0_0/.6)]" style={{ backgroundImage: `url(${mapImage})` }} />
