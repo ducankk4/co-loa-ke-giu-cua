@@ -74,7 +74,7 @@ export function Intro() {
     <Scene id="gioi-thieu" bg={img.exploreBg} pos="70% 50%" className="!pb-0" overlay="from-night/90 via-night/40 to-transparent">
       <div className="grid items-end gap-6 md:grid-cols-[1.15fr_1fr]">
         <div className="relative z-10 self-center pb-12 md:pb-28">
-          <h2 className="h2 mb-6">{intro.title}</h2>
+          <h2 className="h2 mb-6 !text-[clamp(1.875rem,4vw,3.25rem)]">{intro.title}</h2>
           <p className="body">{intro.body}</p>
           <MetaBar className="mt-8" />
         </div>

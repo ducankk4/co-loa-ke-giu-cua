@@ -8,9 +8,9 @@
   --color-red-td: #7a1219;
   --color-blue-adv: #1f4f8f;
   --color-mist: #c9d6df;
-  --font-serif: "Source Serif 4", Georgia, serif;
-  --font-display: "Noto Serif", Georgia, serif;
-  --font-ui: "Be Vietnam Pro", system-ui, sans-serif;
+  --font-serif: "Source Serif 4", "Source Serif Variable", Georgia, serif;
+  --font-display: "Source Serif 4", "Source Serif Variable", Georgia, serif;
+  --font-ui: "Myriad Pro", "Source Sans 3", system-ui, sans-serif;
 }
 
 /* Không dùng scroll-behavior: smooth — xung đột với snap của ScrollTrigger; liên kết # do main.tsx xử lý */
